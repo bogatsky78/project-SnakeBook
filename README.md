@@ -90,4 +90,4 @@ address_book/
 ### Extra features
 - [ ] Replace pickle with SQLite storage backend
 
-test info!!!!
+info
