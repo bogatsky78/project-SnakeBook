@@ -1,6 +1,5 @@
-from .field import Field
-from .record.fields import Name, Phone, Birthday
-from .record import Record
-from .book import AddressBook
-from .handlers import BookHandlers
-from .dumper import Dumper
+from .name import Name
+from .phone import Phone
+from .birthday import Birthday
+from .address import Address
+from .email import Email
