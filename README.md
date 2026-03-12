@@ -1,4 +1,6 @@
 # SnakeBook
+We keep your contacts close and your notes closer
+
 A CLI address book — keep your contacts and their birthdays organised.
 
 A CLI address book bot that manages contacts with phone numbers and birthdays. Data is persisted to disk between sessions using pickle serialization.
