@@ -1,5 +1,5 @@
 from colorama import Fore
-from address_book import BookHandlers, Dumper
+from address_book import BookHandlers, Database
 
 
 def parse_input(user_input):
@@ -8,9 +8,9 @@ def parse_input(user_input):
 
 
 def main():
-    dumper = Dumper(filename="addressbook.pkl")
+    dumper = Database(filename="addressbook.db")
     book = dumper.load()
-    h = BookHandlers(book)
+    h = BookHandlers(book, db=dumper)
     h.show_welcome_message()
 
     while True:
@@ -22,7 +22,6 @@ def main():
 
         result = h.handle(cmd, args)
         if result is False:
-            dumper.save(book)
             break
 
 

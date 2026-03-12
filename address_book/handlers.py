@@ -16,8 +16,9 @@ def input_error(func):
     return wrapper
 
 class BookHandlers:
-    def __init__(self, book):
+    def __init__(self, book, db=None):
         self.book = book
+        self.db = db
         self._handlers = {
             "add": self.add_contact,
             "change": self.change_contact,
@@ -63,6 +64,9 @@ class BookHandlers:
             record.add_phone(phone)
             self.book.add_record(record)
             print_done("Contact added.")
+        if self.db:
+            self.db.save_contact(record)
+            self.db.save_phones(record)
 
     @input_error
     def change_contact(self, args):
@@ -74,6 +78,8 @@ class BookHandlers:
             raise ValueError("Contact not found.")
         record.edit_phone(old_phone, new_phone)
         print_done("Contact updated.")
+        if self.db:
+            self.db.save_phones(record)
 
     @input_error
     def show_phone(self, args):
@@ -94,13 +100,19 @@ class BookHandlers:
             raise ValueError("Contact not found.")
         record.remove_phone(phone)
         print_done("Phone removed.")
+        if self.db:
+            self.db.save_phones(record)
 
     @input_error
     def delete_contact(self, args):
         if len(args) < 1:
             raise ValueError("Provide a name.")
-        self.book.delete(args[0])
+        name = args[0]
+        record = self.book.find(name)
+        self.book.delete(name)
         print_done("Contact deleted.")
+        if self.db and record:
+            self.db.delete_contact(record)
 
     @input_error
     def add_birthday(self, args):
@@ -112,6 +124,8 @@ class BookHandlers:
             raise ValueError("Contact not found.")
         record.add_birthday(birthday)
         print_done("Birthday added.")
+        if self.db:
+            self.db.save_contact(record)
 
     @input_error
     def show_birthday(self, args):
