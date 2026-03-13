@@ -32,3 +32,20 @@ class AddressBook(UserDict):
                     "congratulation_date": congratulation_date.strftime("%Y-%m-%d"),
                 })
         return output
+    
+    def search(self, query):
+        result = []
+        query = query.lower
+        for record in self.data.values():
+            field_to_search = [
+                record.name.value.lower(),
+                *(phone.value for phone in record.phones)
+            ]
+            if hasattr(record, email) and record.email:
+                field_to_search.append(record.email.value.lower())
+            if hasattr(record, address) and record.address:
+                field_to_search.append(record.address.value.lower())
+            if any(query in field for field in fields_to_search):
+                results.append(record)
+        return result
+                

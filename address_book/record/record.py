@@ -3,13 +3,16 @@ from datetime import date, datetime, timedelta
 from .fields.name import Name
 from .fields.phone import Phone
 from .fields.birthday import Birthday
-
+from .fields.address import Address
+from .fields.email import Email
 
 class Record:
     def __init__(self, name):
         self.name = Name(name)
         self.phones = []
         self.birthday = None
+        self.email = None
+        self.address = None
 
     def add_phone(self, phone):
         self.phones.append(Phone(phone))
@@ -55,6 +58,25 @@ class Record:
                 return birthday_next
 
         return None
+
+    def add_email(self, email):
+        self.email = Email(email)
+
+    def remove_email(self):
+        self.email = None
+
+    def edit_email(self, new_email):
+        self.email = Email(new_email)
+
+
+    def add_address(self, address):
+        self.address = Address(address)
+
+    def remove_address(self):
+        self.address = None
+
+    def edit_address(self, new_address):
+        self.address = Email(new_address)
 
     def save(self, db):
         db.save_contact(self)
