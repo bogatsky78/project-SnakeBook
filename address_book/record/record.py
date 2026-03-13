@@ -56,6 +56,10 @@ class Record:
 
         return None
 
+    def save(self, db):
+        db.save_contact(self)
+        db.save_phones(self)
+
     def __str__(self):
         phones = "; ".join(p.value for p in self.phones)
         birthday = f", birthday: {self.birthday.value}" if self.birthday else ""

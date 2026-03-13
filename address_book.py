@@ -10,7 +10,7 @@ def parse_input(user_input):
 def main():
     dumper = Database(filename="addressbook.db")
     book = dumper.load()
-    h = BookHandlers(book, db=dumper)
+    h = BookHandlers(book)
     h.show_welcome_message()
 
     while True:

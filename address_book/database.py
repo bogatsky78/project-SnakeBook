@@ -59,17 +59,8 @@ class Database:
                 (record.name.value,)
             )
 
-    def save(self, book):
-        with sqlite3.connect(self.filename) as conn:
-            conn.execute("PRAGMA foreign_keys = ON")
-            conn.execute("DELETE FROM phones")
-            conn.execute("DELETE FROM contacts")
-        for record in book.data.values():
-            self.save_contact(record)
-            self.save_phones(record)
-
     def load(self):
-        book = AddressBook()
+        book = AddressBook(db=self)
         with sqlite3.connect(self.filename) as conn:
             conn.execute("PRAGMA foreign_keys = ON")
             for name, birthday in conn.execute("SELECT name, birthday FROM contacts"):
@@ -80,5 +71,5 @@ class Database:
                     "SELECT phone FROM phones WHERE contact_name = ?", (name,)
                 ):
                     record.add_phone(phone)
-                book.add_record(record)
+                book.data[record.name.value] = record  # bypass auto-save on load
         return book

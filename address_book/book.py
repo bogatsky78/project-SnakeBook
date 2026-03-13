@@ -2,15 +2,23 @@ from collections import UserDict
 
 
 class AddressBook(UserDict):
+    def __init__(self, db=None):
+        super().__init__()
+        self.db = db
+
     def add_record(self, record):
         self.data[record.name.value] = record
+        if self.db:
+            record.save(self.db)
 
     def find(self, name):
         return self.data.get(name)
 
     def delete(self, name):
         if name in self.data:
-            del self.data[name]
+            record = self.data.pop(name)
+            if self.db:
+                self.db.delete_contact(record)
         else:
             raise ValueError(f"Contact {name} not found.")
 
