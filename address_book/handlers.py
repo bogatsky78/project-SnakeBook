@@ -28,6 +28,12 @@ class BookHandlers:
             "add-birthday": self.add_birthday,
             "show-birthday": self.show_birthday,
             "birthdays": self.birthdays,
+            "add-email": self.add_email,
+            "change-email": self.change_email,
+            "remove-email": self.remove_email,
+            "add-address": self.add_address,
+            "change-address": self.change_address,
+            "remove-address": self.remove_address,
             "hello": self.show_welcome_message
         }
 
@@ -141,6 +147,79 @@ class BookHandlers:
             return
         for entry in upcoming:
             print_done(f"{entry['name']}: {entry['congratulation_date']}")
+
+    @input_error
+    def add_email(self, args):
+        if len(args) < 2:
+            raise ValueError("Provide name and email.")
+        record = self.book.find(args[0])
+        if not record:
+            raise ValueError("Contact not found.")
+        record.add_email(args[1])
+        print(args);
+        print_done("Email added.")
+        if self.book.db:
+            record.save(self.book.db)
+
+    @input_error
+    def change_email(self, args):
+        if len(args) < 2:
+            raise ValueError("Provide name and new email.")
+        record = self.book.find(args[0])
+        if not record:
+            raise ValueError("Contact not found.")
+        record.edit_email(args[1])
+        print_done("Email updated.")
+        if self.book.db:
+            record.save(self.book.db)
+
+    @input_error
+    def remove_email(self, args):
+        if len(args) < 1:
+            raise ValueError("Provide a name.")
+        record = self.book.find(args[0])
+        if not record:
+            raise ValueError("Contact not found.")
+        record.remove_email()
+        print_done("Email removed.")
+        if self.book.db:
+            record.save(self.book.db)
+
+    @input_error
+    def add_address(self, args):
+        if len(args) < 2:
+            raise ValueError("Provide name and address.")
+        record = self.book.find(args[0])
+        if not record:
+            raise ValueError("Contact not found.")
+        record.add_address(" ".join(args[1:]))
+        print_done("Address added.")
+        if self.book.db:
+            record.save(self.book.db)
+
+    @input_error
+    def change_address(self, args):
+        if len(args) < 2:
+            raise ValueError("Provide name and new address.")
+        record = self.book.find(args[0])
+        if not record:
+            raise ValueError("Contact not found.")
+        record.edit_address(" ".join(args[1:]))
+        print_done("Address updated.")
+        if self.book.db:
+            record.save(self.book.db)
+
+    @input_error
+    def remove_address(self, args):
+        if len(args) < 1:
+            raise ValueError("Provide a name.")
+        record = self.book.find(args[0])
+        if not record:
+            raise ValueError("Contact not found.")
+        record.remove_address()
+        print_done("Address removed.")
+        if self.book.db:
+            record.save(self.book.db)
 
     @input_error
     def show_all_contacts(self, _args=None):

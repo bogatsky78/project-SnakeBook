@@ -35,17 +35,17 @@ class AddressBook(UserDict):
     
     def search(self, query):
         result = []
-        query = query.lower
+        query = query.lower()
         for record in self.data.values():
-            field_to_search = [
+            fields_to_search = [
                 record.name.value.lower(),
                 *(phone.value for phone in record.phones)
             ]
-            if hasattr(record, email) and record.email:
-                field_to_search.append(record.email.value.lower())
-            if hasattr(record, address) and record.address:
-                field_to_search.append(record.address.value.lower())
+            if record.email:
+                fields_to_search.append(record.email.value.lower())
+            if record.address:
+                fields_to_search.append(record.address.value.lower())
             if any(query in field for field in fields_to_search):
-                results.append(record)
+                result.append(record)
         return result
                 

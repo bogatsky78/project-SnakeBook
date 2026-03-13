@@ -76,7 +76,7 @@ class Record:
         self.address = None
 
     def edit_address(self, new_address):
-        self.address = Email(new_address)
+        self.address = Address(new_address)
 
     def save(self, db):
         db.save_contact(self)
@@ -85,4 +85,6 @@ class Record:
     def __str__(self):
         phones = "; ".join(p.value for p in self.phones)
         birthday = f", birthday: {self.birthday.value}" if self.birthday else ""
-        return f"Contact name: {self.name.value}, phones: {phones}{birthday}"
+        email = f", email: {self.email.value}" if self.email else ""
+        address = f", address: {self.address.value}" if self.address else ""
+        return f"Contact name: {self.name.value}, phones: {phones}{birthday}{email}{address}"

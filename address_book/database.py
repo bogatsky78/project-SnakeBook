@@ -31,10 +31,12 @@ class Database:
         with sqlite3.connect(self.filename) as conn:
             conn.execute("PRAGMA foreign_keys = ON")
             conn.execute(
-                "INSERT OR REPLACE INTO contacts (name, birthday) VALUES (?, ?)",
+                "INSERT OR REPLACE INTO contacts (name, birthday, email, address) VALUES (?, ?, ?, ?)",
                 (
                     record.name.value,
                     record.birthday.value if record.birthday else None,
+                    record.email.value if record.email else None,
+                    record.address.value if record.address else None,
                 )
             )
 
@@ -63,10 +65,14 @@ class Database:
         book = AddressBook(db=self)
         with sqlite3.connect(self.filename) as conn:
             conn.execute("PRAGMA foreign_keys = ON")
-            for name, birthday in conn.execute("SELECT name, birthday FROM contacts"):
+            for name, birthday, email, address in conn.execute("SELECT name, birthday, email, address FROM contacts"):
                 record = Record(name)
                 if birthday:
                     record.add_birthday(birthday)
+                if email:
+                    record.add_email(email)
+                if address:
+                    record.add_address(address)
                 for (phone,) in conn.execute(
                     "SELECT phone FROM phones WHERE contact_name = ?", (name,)
                 ):
