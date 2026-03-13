@@ -57,11 +57,13 @@ class BookHandlers:
         if record:
             record.add_phone(phone)
             print_done("Phone added to existing contact.")
+            if self.book.db:
+                record.save(self.book.db)
         else:
             from .record.record import Record
             record = Record(name)
             record.add_phone(phone)
-            self.book.add_record(record)
+            self.book.add_record(record)  # auto-saves via AddressBook
             print_done("Contact added.")
 
     @input_error
@@ -74,6 +76,8 @@ class BookHandlers:
             raise ValueError("Contact not found.")
         record.edit_phone(old_phone, new_phone)
         print_done("Contact updated.")
+        if self.book.db:
+            record.save(self.book.db)
 
     @input_error
     def show_phone(self, args):
@@ -94,12 +98,15 @@ class BookHandlers:
             raise ValueError("Contact not found.")
         record.remove_phone(phone)
         print_done("Phone removed.")
+        if self.book.db:
+            record.save(self.book.db)
 
     @input_error
     def delete_contact(self, args):
         if len(args) < 1:
             raise ValueError("Provide a name.")
-        self.book.delete(args[0])
+        name = args[0]
+        self.book.delete(name)  # auto-deletes from db via AddressBook
         print_done("Contact deleted.")
 
     @input_error
@@ -112,6 +119,8 @@ class BookHandlers:
             raise ValueError("Contact not found.")
         record.add_birthday(birthday)
         print_done("Birthday added.")
+        if self.book.db:
+            record.save(self.book.db)
 
     @input_error
     def show_birthday(self, args):

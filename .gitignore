@@ -205,4 +205,11 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+addressbook.db
 addressbook.pkl
+/.idea/.gitignore
+/.idea/deployment.xml
+/.idea/modules.xml
+/.idea/php.xml
+/.idea/SnakeBook.iml
+/.idea/vcs.xml
