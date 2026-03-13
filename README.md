@@ -3,7 +3,7 @@ We keep your contacts close and your notes closer
 
 A CLI address book — keep your contacts and their birthdays organised.
 
-A CLI address book bot that manages contacts with phone numbers and birthdays. Data is persisted to disk between sessions using pickle serialization.
+A CLI address book bot that manages contacts with phone numbers, birthdays, emails, and addresses. Data is persisted to disk between sessions using a SQLite database.
 
 ## Installation
 
@@ -17,7 +17,7 @@ pip install -r requirements.txt
 python3 address_book.py
 ```
 
-The bot loads contacts from `addressbook.pkl` on startup and saves them automatically when you exit.
+The bot loads contacts from `addressbook.db` on startup and saves them automatically after every change.
 
 ## Project Structure
 
@@ -27,13 +27,15 @@ address_book/
 ├── field.py             # abstract Field base class
 ├── book.py              # AddressBook (UserDict)
 ├── handlers.py          # BookHandlers + input_error decorator
-├── dumper.py            # pickle persistence
+├── database.py          # SQLite persistence
 └── record/
     ├── record.py        # Record (single contact)
     └── fields/
         ├── name.py      # Name field
         ├── phone.py     # Phone field
-        └── birthday.py  # Birthday field
+        ├── birthday.py  # Birthday field
+        ├── email.py     # Email field
+        └── address.py   # Address field
 ```
 
 ## Commands
@@ -50,6 +52,12 @@ address_book/
 | `add-birthday` | `<name> <DD.MM.YYYY>` | Add a birthday to a contact |
 | `show-birthday` | `<name>` | Show a contact's birthday |
 | `birthdays` | — | List contacts with birthdays in the next 7 days |
+| `add-email` | `<name> <email>` | Add an email address to a contact |
+| `change-email` | `<name> <email>` | Update a contact's email address |
+| `remove-email` | `<name>` | Remove a contact's email address |
+| `add-address` | `<name> <address>` | Add a postal address to a contact |
+| `change-address` | `<name> <address>` | Update a contact's postal address |
+| `remove-address` | `<name>` | Remove a contact's postal address |
 | `close` / `exit` | — | Save and exit the bot |
 
 ## Classes
@@ -61,18 +69,17 @@ address_book/
 | `Name` | `address_book/record/fields/name.py` | Extends `Field`. Stores a contact's name; validates it is at least 3 alphanumeric/`-`/`_` characters. |
 | `Phone` | `address_book/record/fields/phone.py` | Extends `Field`. Stores a phone number; strips non-digit characters and requires at least 10 digits. |
 | `Birthday` | `address_book/record/fields/birthday.py` | Extends `Field`. Stores a birthday string; validates it matches the `DD.MM.YYYY` format. |
-| `Record` | `address_book/record/record.py` | Represents a single contact. Holds a `Name`, a list of `Phone`s, and an optional `Birthday`. Provides methods to add, edit, remove, and find phones, as well as computing the next congratulation date for upcoming birthdays. |
-| `AddressBook` | `address_book/book.py` | Extends `UserDict`. The main collection of `Record`s, keyed by name. Supports adding, finding, deleting records, and listing contacts with birthdays in the next 7 days. |
+| `Email` | `address_book/record/fields/email.py` | Extends `Field`. Stores an email address; validates it matches standard email format. |
+| `Address` | `address_book/record/fields/address.py` | Extends `Field`. Stores a postal address; requires at least 3 characters. |
+| `Record` | `address_book/record/record.py` | Represents a single contact. Holds a `Name`, a list of `Phone`s, and optional `Birthday`, `Email`, and `Address`. Provides methods to add, edit, and remove each field, as well as computing the next congratulation date for upcoming birthdays. |
+| `AddressBook` | `address_book/book.py` | Extends `UserDict`. The main collection of `Record`s, keyed by name. Supports adding, finding, deleting records, listing contacts with birthdays in the next 7 days, and partial/multi-criteria search across name, phones, email, and address. |
 | `BookHandlers` | `address_book/handlers.py` | Maps CLI commands to their handler methods. Each method validates arguments, delegates to `AddressBook`/`Record`, and prints results. Decorated with `input_error` to handle exceptions gracefully. |
-| `Dumper` | `address_book/dumper.py` | Handles persistence. Saves and loads an `AddressBook` to/from a pickle file (`addressbook.pkl` by default). |
+| `Database` | `address_book/database.py` | Handles persistence via SQLite. Saves and loads an `AddressBook` to/from `addressbook.db`. Contacts are stored in a `contacts` table; phones in a separate `phones` table with a foreign-key cascade on delete. |
 
 ## TODO
 
 ### Core
 
-- [ ] Add `Email` field to `Record` with format validation
-- [ ] Add `Address` field to `Record`
-- [ ] Improve contact search — partial/multi-criteria matching
 - [ ] Implement `Notes` module — `Note` class with text content
 - [ ] `add-note` command
 - [ ] `show-note` / `show-notes` commands
@@ -86,6 +93,3 @@ address_book/
 - [ ] Add tags to notes
 - [ ] `search-notes-by-tag` / sort notes by tag
 - [ ] Intent recognition — predict command from free-text input
-
-### Extra features
-- [ ] Replace pickle with SQLite storage backend
