@@ -7,38 +7,47 @@ class NotesBook(UserDict):
         self.db = db
 
     def add_note(self, note):
-        if note.key in self.data:
-            raise ValueError(f"Note {note.key} already exists.")
-        self.data[note.key] = note
         if self.db:
+            # Save first so the DB assigns the auto-increment id
             note.save(self.db)
+        else:
+            # No database: assign a simple sequential in-memory id
+            note.id = (max(self.data.keys(), default=0) + 1)
+        self.data[note.id] = note
 
-    def find(self, key):
-        return self.data.get(key)
+    def find(self, id):
+        return self.data.get(id)
 
-    def edit(self, key, text):
-        note = self.find(key)
+    def edit(self, id, text):
+        note = self.find(id)
         if not note:
-            raise ValueError(f"Note {key} not found.")
+            raise ValueError(f"Note {id} not found.")
         note.edit_text(text)
         if self.db:
             note.save(self.db)
         return note
 
-    def delete(self, key):
-        if key not in self.data:
-            raise ValueError(f"Note {key} not found.")
-        note = self.data.pop(key)
+    def delete(self, id):
+        if id not in self.data:
+            raise ValueError(f"Note {id} not found.")
+        note = self.data.pop(id)
         if self.db:
-            self.db.delete_note(note.key)
+            self.db.delete_note(note.id)
 
     def search(self, query):
         query = query.lower()
         return [
             note
             for note in self.all_notes()
-            if query in note.key.lower() or query in note.text.lower()
+            if query in note.text.lower()
         ]
+
+    def notes_for_contact(self, contact_name):
+        return sorted(
+            [note for note in self.data.values() if note.contact_name == contact_name],
+            key=lambda note: note.created_at,
+            reverse=True,
+        )
 
     def all_notes(self):
         return sorted(

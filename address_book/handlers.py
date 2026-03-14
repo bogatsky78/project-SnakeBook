@@ -128,6 +128,8 @@ class BookHandlers:
         if len(args) < 1:
             raise ValueError("Provide a name.")
         name = args[0]
+        for key in [k for k, n in self.book.notes.data.items() if n.contact_name == name]:
+            self.book.notes.data.pop(key)
         self.book.delete(name)  # auto-deletes from db via AddressBook
         print_done("Contact deleted.")
 
@@ -260,12 +262,18 @@ class BookHandlers:
             record.add_email(fake.email())
             record.add_address(fake.address().replace("\n", ", "))
             self.book.add_record(record)
+            # Attach 0–10 random notes; id is auto-assigned by the DB
+            for _ in range(random.randint(0, 10)):
+                note_text = fake.sentence()
+                self.book.notes.add_note(Note(None, note_text, contact_name=name))
         print_done(f"{count} test contacts generated.")
 
     @input_error
     def clear_all(self, _args=None):
+        # Remove all contacts (and their phones) from the database if one is attached
         if self.book.db:
             self.book.db.clear_all()
+        # Clear the in-memory contact store so the UI reflects the empty state immediately
         self.book.data.clear()
         print_done("All contacts deleted.")
 
@@ -287,7 +295,13 @@ class BookHandlers:
             ["Email", email],
             ["Address", address],
         ]
+        print("Contact Info")
         print(tabulate(table, tablefmt="grid"))
+        notes = self.book.notes.notes_for_contact(record.name.value)
+        if notes:
+            print("Notes")
+            notes_table = [[note.id, note.formatted_created_at(), note.text] for note in notes]
+            print(tabulate(notes_table, headers=["ID", "Created At", "Text"], tablefmt="grid"))
 
     @input_error
     def show_all_contacts(self, _args=None):
@@ -305,40 +319,44 @@ class BookHandlers:
     @input_error
     def add_note(self, args):
         if len(args) < 2:
-            raise ValueError("Provide note key and text.")
-        note = Note(args[0], " ".join(args[1:]))
+            raise ValueError("Provide contact name and text.")
+        contact_name = args[0]
+        if not self.book.find(contact_name):
+            raise ValueError("Contact not found.")
+        note = Note(None, " ".join(args[1:]), contact_name=contact_name)
         self.book.notes.add_note(note)
-        print_done("Note added.")
+        print_done(f"Note added (ID: {note.id}).")
 
     @input_error
     def show_note(self, args):
         if len(args) < 1:
-            raise ValueError("Provide a note key.")
-        note = self.book.notes.find(args[0])
+            raise ValueError("Provide a note ID.")
+        note = self.book.notes.find(int(args[0]))
         if not note:
             raise ValueError("Note not found.")
-        print_done(str(note))
+        table = [[note.id, note.formatted_created_at(), note.text]]
+        print(tabulate(table, headers=["ID", "Created At", "Text"], tablefmt="grid"))
 
     @input_error
     def show_notes(self, _args=None):
         notes = self.book.notes.all_notes()
         if not notes:
             raise ValueError("No notes found.")
-        for note in notes:
-            print_done(str(note))
+        table = [[note.id, note.formatted_created_at(), note.text] for note in notes]
+        print(tabulate(table, headers=["ID", "Created At", "Text"], tablefmt="grid"))
 
     @input_error
     def edit_note(self, args):
         if len(args) < 2:
-            raise ValueError("Provide note key and new text.")
-        self.book.notes.edit(args[0], " ".join(args[1:]))
+            raise ValueError("Provide note ID and new text.")
+        self.book.notes.edit(int(args[0]), " ".join(args[1:]))
         print_done("Note updated.")
 
     @input_error
     def delete_note(self, args):
         if len(args) < 1:
-            raise ValueError("Provide a note key.")
-        self.book.notes.delete(args[0])
+            raise ValueError("Provide a note ID.")
+        self.book.notes.delete(int(args[0]))
         print_done("Note deleted.")
 
     @input_error
@@ -348,5 +366,5 @@ class BookHandlers:
         notes = self.book.notes.search(" ".join(args))
         if not notes:
             raise ValueError("No notes found.")
-        for note in notes:
-            print_done(str(note))
+        table = [[note.id, note.formatted_created_at(), note.text] for note in notes]
+        print(tabulate(table, headers=["ID", "Created At", "Text"], tablefmt="grid"))
