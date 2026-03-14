@@ -1,6 +1,6 @@
 import sqlite3
 from .book import ContactsBook
-from .notes import Note, NotesBook
+from assistant_notes import Note, NotesBook
 from .record.record import Record
 
 

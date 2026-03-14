@@ -1,6 +1,6 @@
 from colorama import Fore, Style
 
-from .notes import Note
+from assistant_notes import Note
 
 
 def print_done(message):

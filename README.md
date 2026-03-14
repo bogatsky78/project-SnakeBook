@@ -28,10 +28,6 @@ address_book/
 ├── book.py              # ContactsBook (UserDict)
 ├── handlers.py          # AssistantHandlers + input_error decorator
 ├── database.py          # SQLite persistence
-├── notes/
-│   ├── __init__.py      # Note + NotesBook exports
-│   ├── note.py          # Note model
-│   └── notes_book.py    # NotesBook collection
 └── record/
     ├── record.py        # Record (single contact)
     └── fields/
@@ -40,6 +36,11 @@ address_book/
         ├── birthday.py  # Birthday field
         ├── email.py     # Email field
         └── address.py   # Address field
+
+assistant_notes/
+├── __init__.py          # Note + NotesBook exports
+├── note.py              # Note model
+└── notes_book.py        # NotesBook collection
 ```
 
 ## Commands
@@ -82,8 +83,8 @@ address_book/
 | `Email` | `address_book/record/fields/email.py` | Extends `Field`. Stores an email address; validates it matches standard email format. |
 | `Address` | `address_book/record/fields/address.py` | Extends `Field`. Stores a postal address; requires at least 3 characters. |
 | `Record` | `address_book/record/record.py` | Represents a single contact. Holds a `Name`, a list of `Phone`s, and optional `Birthday`, `Email`, and `Address`. Provides methods to add, edit, and remove each field, as well as computing the next congratulation date for upcoming birthdays. |
-| `Note` | `address_book/notes/note.py` | Represents a standalone note with a unique key, text content, and creation timestamp. |
-| `NotesBook` | `address_book/notes/notes_book.py` | Extends `UserDict`. Stores notes keyed by note key, supports add/find/edit/delete/search operations, and lists notes newest first. |
+| `Note` | `assistant_notes/note.py` | Represents a standalone note with a unique key, text content, and creation timestamp. |
+| `NotesBook` | `assistant_notes/notes_book.py` | Extends `UserDict`. Stores notes keyed by note key, supports add/find/edit/delete/search operations, and lists notes newest first. |
 | `ContactsBook` | `address_book/book.py` | Extends `UserDict`. The contact collection of `Record`s, keyed by name. Supports adding, finding, deleting records, listing contacts with birthdays in the next 7 days, and partial/multi-criteria search across name, phones, email, and address. |
 | `AssistantHandlers` | `address_book/handlers.py` | Maps CLI commands to handler methods. Each method validates arguments, delegates to `ContactsBook`/`NotesBook`/`Record`, and prints results. Decorated with `input_error` to handle exceptions gracefully. |
 | `Database` | `address_book/database.py` | Handles persistence via SQLite. Loads contacts and notes into separate collections from `personal_assistant.db`. Contacts are stored in a `contacts` table, phones in a separate `phones` table with a foreign-key cascade on delete, and notes in a `notes` table. |
