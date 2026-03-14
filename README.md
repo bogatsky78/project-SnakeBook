@@ -3,7 +3,7 @@ We keep your contacts close and your notes closer
 
 A CLI address book — keep your contacts and their birthdays organised.
 
-A CLI address book bot that manages contacts with phone numbers, birthdays, emails, and addresses. Data is persisted to disk between sessions using a SQLite database.
+A CLI address book bot that manages contacts with phone numbers, birthdays, emails, addresses, and standalone notes. Data is persisted to disk between sessions using a SQLite database.
 
 ## Installation
 
@@ -28,6 +28,10 @@ address_book/
 ├── book.py              # AddressBook (UserDict)
 ├── handlers.py          # BookHandlers + input_error decorator
 ├── database.py          # SQLite persistence
+├── notes/
+│   ├── __init__.py      # Note + NotesBook exports
+│   ├── note.py          # Note model
+│   └── notes_book.py    # NotesBook collection
 └── record/
     ├── record.py        # Record (single contact)
     └── fields/
@@ -58,6 +62,12 @@ address_book/
 | `add-address` | `<name> <address>` | Add a postal address to a contact |
 | `change-address` | `<name> <address>` | Update a contact's postal address |
 | `remove-address` | `<name>` | Remove a contact's postal address |
+| `add-note` | `<key> <text>` | Add a standalone note |
+| `show-note` | `<key>` | Show a single note |
+| `show-notes` | — | List all notes, newest first |
+| `edit-note` | `<key> <text>` | Update a note's text |
+| `delete-note` | `<key>` | Delete a note |
+| `search-note` | `<query>` | Search notes by key or text |
 | `close` / `exit` | — | Save and exit the bot |
 
 ## Classes
@@ -73,20 +83,22 @@ address_book/
 | `Address` | `address_book/record/fields/address.py` | Extends `Field`. Stores a postal address; requires at least 3 characters. |
 | `Record` | `address_book/record/record.py` | Represents a single contact. Holds a `Name`, a list of `Phone`s, and optional `Birthday`, `Email`, and `Address`. Provides methods to add, edit, and remove each field, as well as computing the next congratulation date for upcoming birthdays. |
 | `AddressBook` | `address_book/book.py` | Extends `UserDict`. The main collection of `Record`s, keyed by name. Supports adding, finding, deleting records, listing contacts with birthdays in the next 7 days, and partial/multi-criteria search across name, phones, email, and address. |
+| `Note` | `address_book/notes/note.py` | Represents a standalone note with a unique key, text content, and creation timestamp. |
+| `NotesBook` | `address_book/notes/notes_book.py` | Extends `UserDict`. Stores notes keyed by note key, supports add/find/edit/delete/search operations, and lists notes newest first. |
 | `BookHandlers` | `address_book/handlers.py` | Maps CLI commands to their handler methods. Each method validates arguments, delegates to `AddressBook`/`Record`, and prints results. Decorated with `input_error` to handle exceptions gracefully. |
-| `Database` | `address_book/database.py` | Handles persistence via SQLite. Saves and loads an `AddressBook` to/from `addressbook.db`. Contacts are stored in a `contacts` table; phones in a separate `phones` table with a foreign-key cascade on delete. |
+| `Database` | `address_book/database.py` | Handles persistence via SQLite. Saves and loads an `AddressBook` to/from `addressbook.db`. Contacts are stored in a `contacts` table, phones in a separate `phones` table with a foreign-key cascade on delete, and notes in a `notes` table. |
 
 ## TODO
 
 ### Core
 
-- [ ] Implement `Notes` module — `Note` class with text content
-- [ ] `add-note` command
-- [ ] `show-note` / `show-notes` commands
-- [ ] `edit-note` command
-- [ ] `delete-note` command
-- [ ] `search-note` command
-- [ ] Persist notes to disk alongside contacts
+- [x] Implement `Notes` module — `Note` class with text content
+- [x] `add-note` command
+- [x] `show-note` / `show-notes` commands
+- [x] `edit-note` command
+- [x] `delete-note` command
+- [x] `search-note` command
+- [x] Persist notes to disk alongside contacts
 
 ### Bonus
 

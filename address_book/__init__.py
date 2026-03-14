@@ -4,3 +4,4 @@ from .record import Record
 from .book import AddressBook
 from .handlers import BookHandlers
 from .database import Database
+from .notes import Note, NotesBook

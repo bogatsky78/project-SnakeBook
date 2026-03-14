@@ -1,5 +1,6 @@
 import sqlite3
 from .book import AddressBook
+from .notes import Note
 from .record.record import Record
 
 
@@ -24,6 +25,13 @@ class Database:
                     id            INTEGER PRIMARY KEY AUTOINCREMENT,
                     contact_name  TEXT NOT NULL REFERENCES contacts(name) ON DELETE CASCADE,
                     phone         TEXT NOT NULL
+                )
+            """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS notes (
+                    note_key   TEXT PRIMARY KEY,
+                    text       TEXT NOT NULL,
+                    created_at TEXT NOT NULL
                 )
             """)
 
@@ -61,6 +69,20 @@ class Database:
                 (record.name.value,)
             )
 
+    def save_note(self, note):
+        with sqlite3.connect(self.filename) as conn:
+            conn.execute(
+                "INSERT OR REPLACE INTO notes (note_key, text, created_at) VALUES (?, ?, ?)",
+                (note.key, note.text, note.created_at)
+            )
+
+    def delete_note(self, key):
+        with sqlite3.connect(self.filename) as conn:
+            conn.execute(
+                "DELETE FROM notes WHERE note_key = ?",
+                (key,)
+            )
+
     def load(self):
         book = AddressBook(db=self)
         with sqlite3.connect(self.filename) as conn:
@@ -78,4 +100,9 @@ class Database:
                 ):
                     record.add_phone(phone)
                 book.data[record.name.value] = record  # bypass auto-save on load
+            for note_key, text, created_at in conn.execute(
+                "SELECT note_key, text, created_at FROM notes ORDER BY created_at DESC"
+            ):
+                note = Note(note_key, text, created_at)
+                book.notes.data[note.key] = note
         return book

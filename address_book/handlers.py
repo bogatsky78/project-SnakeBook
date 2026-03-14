@@ -1,5 +1,7 @@
 from colorama import Fore, Style
 
+from .notes import Note
+
 
 def print_done(message):
     print(Fore.GREEN + message + Style.RESET_ALL)
@@ -34,6 +36,12 @@ class BookHandlers:
             "add-address": self.add_address,
             "change-address": self.change_address,
             "remove-address": self.remove_address,
+            "add-note": self.add_note,
+            "show-note": self.show_note,
+            "show-notes": self.show_notes,
+            "edit-note": self.edit_note,
+            "delete-note": self.delete_note,
+            "search-note": self.search_note,
             "hello": self.show_welcome_message
         }
 
@@ -227,3 +235,52 @@ class BookHandlers:
             raise ValueError("No contacts found.")
         for record in self.book.data.values():
             print_done(str(record))
+
+    @input_error
+    def add_note(self, args):
+        if len(args) < 2:
+            raise ValueError("Provide note key and text.")
+        note = Note(args[0], " ".join(args[1:]))
+        self.book.notes.add_note(note)
+        print_done("Note added.")
+
+    @input_error
+    def show_note(self, args):
+        if len(args) < 1:
+            raise ValueError("Provide a note key.")
+        note = self.book.notes.find(args[0])
+        if not note:
+            raise ValueError("Note not found.")
+        print_done(str(note))
+
+    @input_error
+    def show_notes(self, _args=None):
+        notes = self.book.notes.all_notes()
+        if not notes:
+            raise ValueError("No notes found.")
+        for note in notes:
+            print_done(str(note))
+
+    @input_error
+    def edit_note(self, args):
+        if len(args) < 2:
+            raise ValueError("Provide note key and new text.")
+        self.book.notes.edit(args[0], " ".join(args[1:]))
+        print_done("Note updated.")
+
+    @input_error
+    def delete_note(self, args):
+        if len(args) < 1:
+            raise ValueError("Provide a note key.")
+        self.book.notes.delete(args[0])
+        print_done("Note deleted.")
+
+    @input_error
+    def search_note(self, args):
+        if len(args) < 1:
+            raise ValueError("Provide a search query.")
+        notes = self.book.notes.search(" ".join(args))
+        if not notes:
+            raise ValueError("No notes found.")
+        for note in notes:
+            print_done(str(note))
