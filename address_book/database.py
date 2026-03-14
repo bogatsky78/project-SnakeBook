@@ -35,23 +35,6 @@ class Database:
                     contact_name TEXT
                 )
             """)
-            # Migrate old schema (note_key TEXT PRIMARY KEY) to new (id INTEGER AUTOINCREMENT)
-            cols = [row[1] for row in conn.execute("PRAGMA table_info(notes)").fetchall()]
-            if "note_key" in cols:
-                conn.execute("""
-                    CREATE TABLE notes_new (
-                        id           INTEGER PRIMARY KEY AUTOINCREMENT,
-                        text         TEXT NOT NULL,
-                        created_at   TEXT NOT NULL,
-                        contact_name TEXT
-                    )
-                """)
-                conn.execute("""
-                    INSERT INTO notes_new (text, created_at, contact_name)
-                    SELECT text, created_at, contact_name FROM notes
-                """)
-                conn.execute("DROP TABLE notes")
-                conn.execute("ALTER TABLE notes_new RENAME TO notes")
 
     def save_contact(self, record):
         with sqlite3.connect(self.filename) as conn:
@@ -94,14 +77,12 @@ class Database:
     def save_note(self, note):
         with sqlite3.connect(self.filename) as conn:
             if note.id is None:
-                # New note: insert and capture the auto-assigned id
                 cursor = conn.execute(
                     "INSERT INTO notes (text, created_at, contact_name) VALUES (?, ?, ?)",
                     (note.text, note.created_at, note.contact_name)
                 )
                 note.id = cursor.lastrowid
             else:
-                # Existing note: update in place
                 conn.execute(
                     "UPDATE notes SET text=?, created_at=?, contact_name=? WHERE id=?",
                     (note.text, note.created_at, note.contact_name, note.id)
