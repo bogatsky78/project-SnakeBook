@@ -1,9 +1,9 @@
 # SnakeBook
 We keep your contacts close and your notes closer
 
-A CLI address book — keep your contacts and their birthdays organised.
+A CLI personal assistant for contacts and standalone notes.
 
-A CLI address book bot that manages contacts with phone numbers, birthdays, emails, addresses, and standalone notes. Data is persisted to disk between sessions using a SQLite database.
+A CLI personal assistant that manages contacts with phone numbers, birthdays, emails, addresses, and standalone notes. Notes are independent from contacts and are not tied to postal addresses. Data is persisted to disk between sessions using a SQLite database.
 
 ## Installation
 
@@ -14,10 +14,10 @@ pip install -r requirements.txt
 ## Usage
 
 ```bash
-python3 address_book.py
+python3 personal_assistant.py
 ```
 
-The bot loads contacts from `addressbook.db` on startup and saves them automatically after every change.
+The assistant loads contacts and notes from `personal_assistant.db` on startup and saves them automatically after every change.
 
 ## Project Structure
 
@@ -25,8 +25,8 @@ The bot loads contacts from `addressbook.db` on startup and saves them automatic
 address_book/
 ├── __init__.py          # public exports
 ├── field.py             # abstract Field base class
-├── book.py              # AddressBook (UserDict)
-├── handlers.py          # BookHandlers + input_error decorator
+├── book.py              # ContactsBook (UserDict)
+├── handlers.py          # AssistantHandlers + input_error decorator
 ├── database.py          # SQLite persistence
 ├── notes/
 │   ├── __init__.py      # Note + NotesBook exports
@@ -46,29 +46,29 @@ address_book/
 
 | Command | Arguments | Description |
 |---|---|---|
-| `hello` | — | Greet the bot |
-| `add` | `<name> <phone>` | Add a phone to a new or existing contact |
-| `change` | `<name> <old_phone> <new_phone>` | Replace a phone number for an existing contact |
-| `remove-phone` | `<name> <phone>` | Remove a specific phone from a contact |
-| `delete` | `<name>` | Remove a contact entirely |
-| `phone` | `<name>` | Show a contact's phones |
-| `all` | — | List all contacts |
-| `add-birthday` | `<name> <DD.MM.YYYY>` | Add a birthday to a contact |
-| `show-birthday` | `<name>` | Show a contact's birthday |
-| `birthdays` | — | List contacts with birthdays in the next 7 days |
-| `add-email` | `<name> <email>` | Add an email address to a contact |
-| `change-email` | `<name> <email>` | Update a contact's email address |
-| `remove-email` | `<name>` | Remove a contact's email address |
-| `add-address` | `<name> <address>` | Add a postal address to a contact |
-| `change-address` | `<name> <address>` | Update a contact's postal address |
-| `remove-address` | `<name>` | Remove a contact's postal address |
+| `hello` | — | Greet the assistant |
+| `add-contact` | `<name> <phone>` | Add a phone to a new or existing contact |
+| `change-contact` | `<name> <old_phone> <new_phone>` | Replace a phone number for an existing contact (alias: `change`) |
+| `remove-contact-phone` | `<name> <phone>` | Remove a specific phone from a contact (alias: `remove-phone`) |
+| `show-contact-phone` | `<name>` | Show a contact's phones (alias: `phone`) |
+| `delete-contact` | `<name>` | Remove a contact entirely (alias: `delete`) |
+| `show-contacts` | — | List all contacts (alias: `all`) |
+| `add-contact-birthday` | `<name> <DD.MM.YYYY>` | Add a birthday to a contact (alias: `add-birthday`) |
+| `show-contact-birthday` | `<name>` | Show a contact's birthday (alias: `show-birthday`) |
+| `show-upcoming-birthdays` | — | List contacts with birthdays in the next 7 days (alias: `birthdays`) |
+| `add-contact-email` | `<name> <email>` | Add an email address to a contact (alias: `add-email`) |
+| `change-contact-email` | `<name> <email>` | Update a contact's email address (alias: `change-email`) |
+| `remove-contact-email` | `<name>` | Remove a contact's email address (alias: `remove-email`) |
+| `add-contact-address` | `<name> <address>` | Add a postal address to a contact (alias: `add-address`) |
+| `change-contact-address` | `<name> <address>` | Update a contact's postal address (alias: `change-address`) |
+| `remove-contact-address` | `<name>` | Remove a contact's postal address (alias: `remove-address`) |
 | `add-note` | `<key> <text>` | Add a standalone note |
 | `show-note` | `<key>` | Show a single note |
 | `show-notes` | — | List all notes, newest first |
 | `edit-note` | `<key> <text>` | Update a note's text |
 | `delete-note` | `<key>` | Delete a note |
 | `search-note` | `<query>` | Search notes by key or text |
-| `close` / `exit` | — | Save and exit the bot |
+| `close` / `exit` | — | Save and exit the assistant |
 
 ## Classes
 
@@ -82,11 +82,11 @@ address_book/
 | `Email` | `address_book/record/fields/email.py` | Extends `Field`. Stores an email address; validates it matches standard email format. |
 | `Address` | `address_book/record/fields/address.py` | Extends `Field`. Stores a postal address; requires at least 3 characters. |
 | `Record` | `address_book/record/record.py` | Represents a single contact. Holds a `Name`, a list of `Phone`s, and optional `Birthday`, `Email`, and `Address`. Provides methods to add, edit, and remove each field, as well as computing the next congratulation date for upcoming birthdays. |
-| `AddressBook` | `address_book/book.py` | Extends `UserDict`. The main collection of `Record`s, keyed by name. Supports adding, finding, deleting records, listing contacts with birthdays in the next 7 days, and partial/multi-criteria search across name, phones, email, and address. |
 | `Note` | `address_book/notes/note.py` | Represents a standalone note with a unique key, text content, and creation timestamp. |
 | `NotesBook` | `address_book/notes/notes_book.py` | Extends `UserDict`. Stores notes keyed by note key, supports add/find/edit/delete/search operations, and lists notes newest first. |
-| `BookHandlers` | `address_book/handlers.py` | Maps CLI commands to their handler methods. Each method validates arguments, delegates to `AddressBook`/`Record`, and prints results. Decorated with `input_error` to handle exceptions gracefully. |
-| `Database` | `address_book/database.py` | Handles persistence via SQLite. Saves and loads an `AddressBook` to/from `addressbook.db`. Contacts are stored in a `contacts` table, phones in a separate `phones` table with a foreign-key cascade on delete, and notes in a `notes` table. |
+| `ContactsBook` | `address_book/book.py` | Extends `UserDict`. The contact collection of `Record`s, keyed by name. Supports adding, finding, deleting records, listing contacts with birthdays in the next 7 days, and partial/multi-criteria search across name, phones, email, and address. |
+| `AssistantHandlers` | `address_book/handlers.py` | Maps CLI commands to handler methods. Each method validates arguments, delegates to `ContactsBook`/`NotesBook`/`Record`, and prints results. Decorated with `input_error` to handle exceptions gracefully. |
+| `Database` | `address_book/database.py` | Handles persistence via SQLite. Loads contacts and notes into separate collections from `personal_assistant.db`. Contacts are stored in a `contacts` table, phones in a separate `phones` table with a foreign-key cascade on delete, and notes in a `notes` table. |
 
 ## TODO
 

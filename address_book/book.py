@@ -1,13 +1,9 @@
 from collections import UserDict
 
-from .notes import NotesBook
-
-
-class AddressBook(UserDict):
+class ContactsBook(UserDict):
     def __init__(self, db=None):
         super().__init__()
         self.db = db
-        self.notes = NotesBook(db=db)
 
     def add_record(self, record):
         self.data[record.name.value] = record

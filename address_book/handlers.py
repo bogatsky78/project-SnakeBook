@@ -17,11 +17,29 @@ def input_error(func):
             print_error(str(e))
     return wrapper
 
-class BookHandlers:
-    def __init__(self, book):
-        self.book = book
+class AssistantHandlers:
+    def __init__(self, contacts_book, notes_book):
+        self.contacts_book = contacts_book
+        self.notes_book = notes_book
         self._handlers = {
-            "add": self.add_contact,
+            # Contact commands (explicit names)
+            "add-contact": self.add_contact,
+            "change-contact": self.change_contact,
+            "remove-contact-phone": self.remove_phone,
+            "show-contact-phone": self.show_phone,
+            "delete-contact": self.delete_contact,
+            "show-contacts": self.show_all_contacts,
+            "add-contact-birthday": self.add_birthday,
+            "show-contact-birthday": self.show_birthday,
+            "show-upcoming-birthdays": self.birthdays,
+            "add-contact-email": self.add_email,
+            "change-contact-email": self.change_email,
+            "remove-contact-email": self.remove_email,
+            "add-contact-address": self.add_address,
+            "change-contact-address": self.change_address,
+            "remove-contact-address": self.remove_address,
+
+            # Backward-compatible aliases
             "change": self.change_contact,
             "remove-phone": self.remove_phone,
             "phone": self.show_phone,
@@ -46,7 +64,7 @@ class BookHandlers:
         }
 
     def show_welcome_message(self, _args=None):
-        print_done("Welcome to the assistant bot!")
+        print_done("Welcome to Personal Assistant!")
 
     def show_goodbye_message(self, _args=None):
         print_done("Good bye!")
@@ -67,17 +85,17 @@ class BookHandlers:
         if len(args) < 2:
             raise ValueError("Provide name and phone number.")
         name, phone = args[0], args[1]
-        record = self.book.find(name)
+        record = self.contacts_book.find(name)
         if record:
             record.add_phone(phone)
             print_done("Phone added to existing contact.")
-            if self.book.db:
-                record.save(self.book.db)
+            if self.contacts_book.db:
+                record.save(self.contacts_book.db)
         else:
             from .record.record import Record
             record = Record(name)
             record.add_phone(phone)
-            self.book.add_record(record)  # auto-saves via AddressBook
+            self.contacts_book.add_record(record)
             print_done("Contact added.")
 
     @input_error
@@ -85,19 +103,19 @@ class BookHandlers:
         if len(args) < 3:
             raise ValueError("Provide name, old phone number, and new phone number.")
         name, old_phone, new_phone = args[0], args[1], args[2]
-        record = self.book.find(name)
+        record = self.contacts_book.find(name)
         if not record:
             raise ValueError("Contact not found.")
         record.edit_phone(old_phone, new_phone)
         print_done("Contact updated.")
-        if self.book.db:
-            record.save(self.book.db)
+        if self.contacts_book.db:
+            record.save(self.contacts_book.db)
 
     @input_error
     def show_phone(self, args):
         if len(args) < 1:
             raise ValueError("Provide a name.")
-        record = self.book.find(args[0])
+        record = self.contacts_book.find(args[0])
         if not record:
             raise ValueError("Contact not found.")
         print_done(str(record))
@@ -107,20 +125,20 @@ class BookHandlers:
         if len(args) < 2:
             raise ValueError("Provide name and phone number.")
         name, phone = args[0], args[1]
-        record = self.book.find(name)
+        record = self.contacts_book.find(name)
         if not record:
             raise ValueError("Contact not found.")
         record.remove_phone(phone)
         print_done("Phone removed.")
-        if self.book.db:
-            record.save(self.book.db)
+        if self.contacts_book.db:
+            record.save(self.contacts_book.db)
 
     @input_error
     def delete_contact(self, args):
         if len(args) < 1:
             raise ValueError("Provide a name.")
         name = args[0]
-        self.book.delete(name)  # auto-deletes from db via AddressBook
+        self.contacts_book.delete(name)
         print_done("Contact deleted.")
 
     @input_error
@@ -128,19 +146,19 @@ class BookHandlers:
         if len(args) < 2:
             raise ValueError("Provide name and birthday (DD.MM.YYYY).")
         name, birthday = args[0], args[1]
-        record = self.book.find(name)
+        record = self.contacts_book.find(name)
         if not record:
             raise ValueError("Contact not found.")
         record.add_birthday(birthday)
         print_done("Birthday added.")
-        if self.book.db:
-            record.save(self.book.db)
+        if self.contacts_book.db:
+            record.save(self.contacts_book.db)
 
     @input_error
     def show_birthday(self, args):
         if len(args) < 1:
             raise ValueError("Provide a name.")
-        record = self.book.find(args[0])
+        record = self.contacts_book.find(args[0])
         if not record:
             raise ValueError("Contact not found.")
         if not record.birthday:
@@ -149,7 +167,7 @@ class BookHandlers:
 
     @input_error
     def birthdays(self, _args):
-        upcoming = self.book.get_upcoming_birthdays()
+        upcoming = self.contacts_book.get_upcoming_birthdays()
         if not upcoming:
             print_done("No birthdays in the next 7 days.")
             return
@@ -160,80 +178,79 @@ class BookHandlers:
     def add_email(self, args):
         if len(args) < 2:
             raise ValueError("Provide name and email.")
-        record = self.book.find(args[0])
+        record = self.contacts_book.find(args[0])
         if not record:
             raise ValueError("Contact not found.")
         record.add_email(args[1])
-        print(args);
         print_done("Email added.")
-        if self.book.db:
-            record.save(self.book.db)
+        if self.contacts_book.db:
+            record.save(self.contacts_book.db)
 
     @input_error
     def change_email(self, args):
         if len(args) < 2:
             raise ValueError("Provide name and new email.")
-        record = self.book.find(args[0])
+        record = self.contacts_book.find(args[0])
         if not record:
             raise ValueError("Contact not found.")
         record.edit_email(args[1])
         print_done("Email updated.")
-        if self.book.db:
-            record.save(self.book.db)
+        if self.contacts_book.db:
+            record.save(self.contacts_book.db)
 
     @input_error
     def remove_email(self, args):
         if len(args) < 1:
             raise ValueError("Provide a name.")
-        record = self.book.find(args[0])
+        record = self.contacts_book.find(args[0])
         if not record:
             raise ValueError("Contact not found.")
         record.remove_email()
         print_done("Email removed.")
-        if self.book.db:
-            record.save(self.book.db)
+        if self.contacts_book.db:
+            record.save(self.contacts_book.db)
 
     @input_error
     def add_address(self, args):
         if len(args) < 2:
             raise ValueError("Provide name and address.")
-        record = self.book.find(args[0])
+        record = self.contacts_book.find(args[0])
         if not record:
             raise ValueError("Contact not found.")
         record.add_address(" ".join(args[1:]))
         print_done("Address added.")
-        if self.book.db:
-            record.save(self.book.db)
+        if self.contacts_book.db:
+            record.save(self.contacts_book.db)
 
     @input_error
     def change_address(self, args):
         if len(args) < 2:
             raise ValueError("Provide name and new address.")
-        record = self.book.find(args[0])
+        record = self.contacts_book.find(args[0])
         if not record:
             raise ValueError("Contact not found.")
         record.edit_address(" ".join(args[1:]))
         print_done("Address updated.")
-        if self.book.db:
-            record.save(self.book.db)
+        if self.contacts_book.db:
+            record.save(self.contacts_book.db)
 
     @input_error
     def remove_address(self, args):
         if len(args) < 1:
             raise ValueError("Provide a name.")
-        record = self.book.find(args[0])
+        record = self.contacts_book.find(args[0])
         if not record:
             raise ValueError("Contact not found.")
         record.remove_address()
         print_done("Address removed.")
-        if self.book.db:
-            record.save(self.book.db)
+        if self.contacts_book.db:
+            record.save(self.contacts_book.db)
 
     @input_error
     def show_all_contacts(self, _args=None):
-        if not self.book.data:
+        if not self.contacts_book.data:
             raise ValueError("No contacts found.")
-        for record in self.book.data.values():
+        for record in self.contacts_book.data.values():
             print_done(str(record))
 
     @input_error
@@ -241,21 +258,21 @@ class BookHandlers:
         if len(args) < 2:
             raise ValueError("Provide note key and text.")
         note = Note(args[0], " ".join(args[1:]))
-        self.book.notes.add_note(note)
+        self.notes_book.add_note(note)
         print_done("Note added.")
 
     @input_error
     def show_note(self, args):
         if len(args) < 1:
             raise ValueError("Provide a note key.")
-        note = self.book.notes.find(args[0])
+        note = self.notes_book.find(args[0])
         if not note:
             raise ValueError("Note not found.")
         print_done(str(note))
 
     @input_error
     def show_notes(self, _args=None):
-        notes = self.book.notes.all_notes()
+        notes = self.notes_book.all_notes()
         if not notes:
             raise ValueError("No notes found.")
         for note in notes:
@@ -265,21 +282,21 @@ class BookHandlers:
     def edit_note(self, args):
         if len(args) < 2:
             raise ValueError("Provide note key and new text.")
-        self.book.notes.edit(args[0], " ".join(args[1:]))
+        self.notes_book.edit(args[0], " ".join(args[1:]))
         print_done("Note updated.")
 
     @input_error
     def delete_note(self, args):
         if len(args) < 1:
             raise ValueError("Provide a note key.")
-        self.book.notes.delete(args[0])
+        self.notes_book.delete(args[0])
         print_done("Note deleted.")
 
     @input_error
     def search_note(self, args):
         if len(args) < 1:
             raise ValueError("Provide a search query.")
-        notes = self.book.notes.search(" ".join(args))
+        notes = self.notes_book.search(" ".join(args))
         if not notes:
             raise ValueError("No notes found.")
         for note in notes:

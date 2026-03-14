@@ -10,8 +10,8 @@ def parse_input(user_input):
 def main():
     dumper = Database(filename="personal_assistant.db")
     contacts_book, notes_book = dumper.load()
-    h = AssistantHandlers(contacts_book, notes_book)
-    h.show_welcome_message()
+    handlers = AssistantHandlers(contacts_book, notes_book)
+    handlers.show_welcome_message()
 
     while True:
         command = input(Fore.BLUE + "Enter a command: " + Fore.RESET).strip()
@@ -20,7 +20,7 @@ def main():
 
         cmd, *args = parse_input(command)
 
-        result = h.handle(cmd, args)
+        result = handlers.handle(cmd, args)
         if result is False:
             break
 

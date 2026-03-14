@@ -1,11 +1,11 @@
 import sqlite3
-from .book import AddressBook
-from .notes import Note
+from .book import ContactsBook
+from .notes import Note, NotesBook
 from .record.record import Record
 
 
 class Database:
-    def __init__(self, filename="addressbook.db"):
+    def __init__(self, filename="personal_assistant.db"):
         self.filename = filename
         self._init_db()
 
@@ -84,7 +84,8 @@ class Database:
             )
 
     def load(self):
-        book = AddressBook(db=self)
+        contacts_book = ContactsBook(db=self)
+        notes_book = NotesBook(db=self)
         with sqlite3.connect(self.filename) as conn:
             conn.execute("PRAGMA foreign_keys = ON")
             for name, birthday, email, address in conn.execute("SELECT name, birthday, email, address FROM contacts"):
@@ -99,10 +100,10 @@ class Database:
                     "SELECT phone FROM phones WHERE contact_name = ?", (name,)
                 ):
                     record.add_phone(phone)
-                book.data[record.name.value] = record  # bypass auto-save on load
+                contacts_book.data[record.name.value] = record  # bypass auto-save on load
             for note_key, text, created_at in conn.execute(
                 "SELECT note_key, text, created_at FROM notes ORDER BY created_at DESC"
             ):
                 note = Note(note_key, text, created_at)
-                book.notes.data[note.key] = note
-        return book
+                notes_book.data[note.key] = note
+        return contacts_book, notes_book
