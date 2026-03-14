@@ -1,6 +1,7 @@
 from colorama import Fore, Style
 
-from assistant_notes import Note
+from notes import Note
+from contacts.record.record import Record
 
 
 def print_done(message):
@@ -92,7 +93,6 @@ class AssistantHandlers:
             if self.contacts_book.db:
                 record.save(self.contacts_book.db)
         else:
-            from .record.record import Record
             record = Record(name)
             record.add_phone(phone)
             self.contacts_book.add_record(record)

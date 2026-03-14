@@ -22,25 +22,30 @@ The assistant loads contacts and notes from `personal_assistant.db` on startup a
 ## Project Structure
 
 ```
-address_book/
-├── __init__.py          # public exports
+contacts/
+├── __init__.py          # contacts domain exports
 ├── field.py             # abstract Field base class
 ├── book.py              # ContactsBook (UserDict)
-├── handlers.py          # AssistantHandlers + input_error decorator
-├── database.py          # SQLite persistence
 └── record/
+    ├── __init__.py
     ├── record.py        # Record (single contact)
     └── fields/
+        ├── __init__.py
         ├── name.py      # Name field
         ├── phone.py     # Phone field
         ├── birthday.py  # Birthday field
         ├── email.py     # Email field
         └── address.py   # Address field
 
-assistant_notes/
-├── __init__.py          # Note + NotesBook exports
+notes/
+├── __init__.py          # notes domain exports
 ├── note.py              # Note model
 └── notes_book.py        # NotesBook collection
+
+assistant_core/
+├── __init__.py          # orchestration exports
+├── handlers.py          # AssistantHandlers + input_error decorator
+└── database.py          # SQLite persistence
 ```
 
 ## Commands
@@ -71,23 +76,30 @@ assistant_notes/
 | `search-note` | `<query>` | Search notes by key or text |
 | `close` / `exit` | — | Save and exit the assistant |
 
+## Naming Conventions
+
+- `contacts` package: contacts domain models and fields.
+- `notes` package: standalone notes domain models.
+- `assistant_core` package: shared orchestration (CLI handlers and persistence).
+- `personal_assistant.py`: primary application entrypoint.
+
 ## Classes
 
 | Class | File | Description |
 |---|---|---|
-| `input_error`, `print_done`, `print_error` | `address_book/handlers.py` | Shared utilities: `input_error` wraps handlers to catch common exceptions and display errors; `print_done`/`print_error` print colour-coded output. |
-| `Field` | `address_book/field.py` | Base class for all contact fields. Stores a single value with a property getter/setter. |
-| `Name` | `address_book/record/fields/name.py` | Extends `Field`. Stores a contact's name; validates it is at least 3 alphanumeric/`-`/`_` characters. |
-| `Phone` | `address_book/record/fields/phone.py` | Extends `Field`. Stores a phone number; strips non-digit characters and requires at least 10 digits. |
-| `Birthday` | `address_book/record/fields/birthday.py` | Extends `Field`. Stores a birthday string; validates it matches the `DD.MM.YYYY` format. |
-| `Email` | `address_book/record/fields/email.py` | Extends `Field`. Stores an email address; validates it matches standard email format. |
-| `Address` | `address_book/record/fields/address.py` | Extends `Field`. Stores a postal address; requires at least 3 characters. |
-| `Record` | `address_book/record/record.py` | Represents a single contact. Holds a `Name`, a list of `Phone`s, and optional `Birthday`, `Email`, and `Address`. Provides methods to add, edit, and remove each field, as well as computing the next congratulation date for upcoming birthdays. |
-| `Note` | `assistant_notes/note.py` | Represents a standalone note with a unique key, text content, and creation timestamp. |
-| `NotesBook` | `assistant_notes/notes_book.py` | Extends `UserDict`. Stores notes keyed by note key, supports add/find/edit/delete/search operations, and lists notes newest first. |
-| `ContactsBook` | `address_book/book.py` | Extends `UserDict`. The contact collection of `Record`s, keyed by name. Supports adding, finding, deleting records, listing contacts with birthdays in the next 7 days, and partial/multi-criteria search across name, phones, email, and address. |
-| `AssistantHandlers` | `address_book/handlers.py` | Maps CLI commands to handler methods. Each method validates arguments, delegates to `ContactsBook`/`NotesBook`/`Record`, and prints results. Decorated with `input_error` to handle exceptions gracefully. |
-| `Database` | `address_book/database.py` | Handles persistence via SQLite. Loads contacts and notes into separate collections from `personal_assistant.db`. Contacts are stored in a `contacts` table, phones in a separate `phones` table with a foreign-key cascade on delete, and notes in a `notes` table. |
+| `input_error`, `print_done`, `print_error` | `assistant_core/handlers.py` | Shared utilities: `input_error` wraps handlers to catch common exceptions and display errors; `print_done`/`print_error` print colour-coded output. |
+| `Field` | `contacts/field.py` | Base class for all contact fields. Stores a single value with a property getter/setter. |
+| `Name` | `contacts/record/fields/name.py` | Extends `Field`. Stores a contact's name; validates it is at least 3 alphanumeric/`-`/`_` characters. |
+| `Phone` | `contacts/record/fields/phone.py` | Extends `Field`. Stores a phone number; strips non-digit characters and requires at least 10 digits. |
+| `Birthday` | `contacts/record/fields/birthday.py` | Extends `Field`. Stores a birthday string; validates it matches the `DD.MM.YYYY` format. |
+| `Email` | `contacts/record/fields/email.py` | Extends `Field`. Stores an email address; validates it matches standard email format. |
+| `Address` | `contacts/record/fields/address.py` | Extends `Field`. Stores a postal address; requires at least 3 characters. |
+| `Record` | `contacts/record/record.py` | Represents a single contact. Holds a `Name`, a list of `Phone`s, and optional `Birthday`, `Email`, and `Address`. Provides methods to add, edit, and remove each field, as well as computing the next congratulation date for upcoming birthdays. |
+| `Note` | `notes/note.py` | Represents a standalone note with a unique key, text content, and creation timestamp. |
+| `NotesBook` | `notes/notes_book.py` | Extends `UserDict`. Stores notes keyed by note key, supports add/find/edit/delete/search operations, and lists notes newest first. |
+| `ContactsBook` | `contacts/book.py` | Extends `UserDict`. The contact collection of `Record`s, keyed by name. Supports adding, finding, deleting records, listing contacts with birthdays in the next 7 days, and partial/multi-criteria search across name, phones, email, and address. |
+| `AssistantHandlers` | `assistant_core/handlers.py` | Maps CLI commands to handler methods. Each method validates arguments, delegates to `ContactsBook`/`NotesBook`/`Record`, and prints results. Decorated with `input_error` to handle exceptions gracefully. |
+| `Database` | `assistant_core/database.py` | Handles persistence via SQLite. Loads contacts and notes into separate collections from `personal_assistant.db`. Contacts are stored in a `contacts` table, phones in a separate `phones` table with a foreign-key cascade on delete, and notes in a `notes` table. |
 
 ## TODO
 

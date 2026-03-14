@@ -1,5 +1,5 @@
 from colorama import Fore
-from address_book import AssistantHandlers, Database
+from assistant_core import AssistantHandlers, Database
 
 
 def parse_input(user_input):

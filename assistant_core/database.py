@@ -1,7 +1,7 @@
 import sqlite3
-from .book import ContactsBook
-from assistant_notes import Note, NotesBook
-from .record.record import Record
+from contacts.book import ContactsBook
+from notes import Note, NotesBook
+from contacts.record.record import Record
 
 
 class Database:
