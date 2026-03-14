@@ -61,6 +61,13 @@ class Database:
                 (record.name.value,)
             )
 
+    def clear_all(self):
+        with sqlite3.connect(self.filename) as conn:
+            conn.execute("PRAGMA foreign_keys = OFF")
+            conn.execute("DELETE FROM phones")
+            conn.execute("DELETE FROM contacts")
+            conn.execute("PRAGMA foreign_keys = ON")
+
     def load(self):
         book = AddressBook(db=self)
         with sqlite3.connect(self.filename) as conn:

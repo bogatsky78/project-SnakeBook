@@ -55,9 +55,12 @@ address_book/
 | `add-email` | `<name> <email>` | Add an email address to a contact |
 | `change-email` | `<name> <email>` | Update a contact's email address |
 | `remove-email` | `<name>` | Remove a contact's email address |
-| `add-address` | `<name> <address>` | Add a postal address to a contact |
-| `change-address` | `<name> <address>` | Update a contact's postal address |
+| `add-address` | `<name> <word> ...` | Add a postal address to a contact (all words after name are joined) |
+| `change-address` | `<name> <word> ...` | Update a contact's postal address (all words after name are joined) |
 | `remove-address` | `<name>` | Remove a contact's postal address |
+| `info` | `<name>` | Show all details for a contact in a table |
+| `generate-test-data` | — | Clear all data and insert 5–7 fake contacts |
+| `clear-all` | — | Delete all contacts and phones from the database |
 | `close` / `exit` | — | Save and exit the bot |
 
 ## Classes

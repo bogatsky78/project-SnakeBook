@@ -1,4 +1,9 @@
+import re
+import random
 from colorama import Fore, Style
+from tabulate import tabulate
+from faker import Faker
+from .record.record import Record
 
 
 def print_done(message):
@@ -34,6 +39,9 @@ class BookHandlers:
             "add-address": self.add_address,
             "change-address": self.change_address,
             "remove-address": self.remove_address,
+            "generate-test-data": self.generate_test_data,
+            "clear-all": self.clear_all,
+            "info": self.show_contact_info,
             "hello": self.show_welcome_message
         }
 
@@ -92,7 +100,9 @@ class BookHandlers:
         record = self.book.find(args[0])
         if not record:
             raise ValueError("Contact not found.")
-        print_done(str(record))
+        phones = "; ".join(p.value for p in record.phones)
+        table = [[record.name.value, phones]]
+        print(tabulate(table, headers=["Name", "Phones"], tablefmt="grid"))
 
     @input_error
     def remove_phone(self, args):
@@ -145,8 +155,8 @@ class BookHandlers:
         if not upcoming:
             print_done("No birthdays in the next 7 days.")
             return
-        for entry in upcoming:
-            print_done(f"{entry['name']}: {entry['congratulation_date']}")
+        table = [[entry['name'], entry['congratulation_date']] for entry in upcoming]
+        print(tabulate(table, headers=["Name", "Congratulation Date"], tablefmt="grid"))
 
     @input_error
     def add_email(self, args):
@@ -222,8 +232,66 @@ class BookHandlers:
             record.save(self.book.db)
 
     @input_error
+    def generate_test_data(self, _args=None):
+        self.clear_all()
+        fake = Faker()
+        count = random.randint(5, 7)
+        for _ in range(count):
+            name = re.sub(r"[^a-zA-Z0-9_-]", "_", fake.name()).strip("_")
+            record = Record(name)
+            for _ in range(random.randint(1, 3)):
+                digits = ''.join(filter(str.isdigit, fake.numerify('##########')))
+                record.add_phone(digits)
+            from datetime import date, timedelta
+            today = date.today()
+            target_day = today + timedelta(days=random.randint(-15, 15))
+            birth_year = today.year - random.randint(18, 80)
+            try:
+                birthday = date(birth_year, target_day.month, target_day.day)
+            except ValueError:
+                birthday = date(birth_year, target_day.month, target_day.day - 1)
+            record.add_birthday(birthday.strftime("%d.%m.%Y"))
+            record.add_email(fake.email())
+            record.add_address(fake.address().replace("\n", ", "))
+            self.book.add_record(record)
+        print_done(f"{count} test contacts generated.")
+
+    @input_error
+    def clear_all(self, _args=None):
+        if self.book.db:
+            self.book.db.clear_all()
+        self.book.data.clear()
+        print_done("All contacts deleted.")
+
+    @input_error
+    def show_contact_info(self, args):
+        if len(args) < 1:
+            raise ValueError("Provide a name.")
+        record = self.book.find(args[0])
+        if not record:
+            raise ValueError("Contact not found.")
+        phones = "; ".join(p.value for p in record.phones)
+        birthday = record.birthday.value if record.birthday else ""
+        email = record.email.value if record.email else ""
+        address = record.address.value if record.address else ""
+        table = [
+            ["Name", record.name.value],
+            ["Phones", phones],
+            ["Birthday", birthday],
+            ["Email", email],
+            ["Address", address],
+        ]
+        print(tabulate(table, tablefmt="grid"))
+
+    @input_error
     def show_all_contacts(self, _args=None):
         if not self.book.data:
             raise ValueError("No contacts found.")
+        table = []
         for record in self.book.data.values():
-            print_done(str(record))
+            phones = "; ".join(p.value for p in record.phones)
+            birthday = record.birthday.value if record.birthday else ""
+            email = record.email.value if record.email else ""
+            address = record.address.value if record.address else ""
+            table.append([record.name.value, phones, birthday, email, address])
+        print(tabulate(table, headers=["Name", "Phones", "Birthday", "Email", "Address"], tablefmt="grid"))
