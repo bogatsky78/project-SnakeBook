@@ -1,14 +1,11 @@
 from datetime import datetime, timezone
-
 from colorama import Fore, Style
 
-
 class Note:
-    def __init__(self, id, text, created_at=None, contact_name=None):
+    def __init__(self, id, text, created_at=None):
         self.id = id  # None for new notes; assigned by the DB after the first save
         self.text = text
         self.created_at = created_at or datetime.now(timezone.utc).isoformat(timespec="microseconds")
-        self.contact_name = contact_name
 
     @property
     def text(self):

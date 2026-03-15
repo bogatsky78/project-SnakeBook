@@ -1,6 +1,5 @@
 from collections import UserDict
 
-
 class NotesBook(UserDict):
     def __init__(self, db=None):
         super().__init__()
@@ -41,13 +40,6 @@ class NotesBook(UserDict):
             for note in self.all_notes()
             if query in note.text.lower()
         ]
-
-    def notes_for_contact(self, contact_name):
-        return sorted(
-            [note for note in self.data.values() if note.contact_name == contact_name],
-            key=lambda note: note.created_at,
-            reverse=True,
-        )
 
     def all_notes(self):
         return sorted(

@@ -29,10 +29,9 @@ class Database:
             """)
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS notes (
-                    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-                    text         TEXT NOT NULL,
-                    created_at   TEXT NOT NULL,
-                    contact_name TEXT
+                    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                    text       TEXT NOT NULL,
+                    created_at TEXT NOT NULL
                 )
             """)
 
@@ -66,10 +65,6 @@ class Database:
         with sqlite3.connect(self.filename) as conn:
             conn.execute("PRAGMA foreign_keys = ON")
             conn.execute(
-                "DELETE FROM notes WHERE contact_name = ?",
-                (record.name.value,)
-            )
-            conn.execute(
                 "DELETE FROM contacts WHERE name = ?",
                 (record.name.value,)
             )
@@ -78,14 +73,14 @@ class Database:
         with sqlite3.connect(self.filename) as conn:
             if note.id is None:
                 cursor = conn.execute(
-                    "INSERT INTO notes (text, created_at, contact_name) VALUES (?, ?, ?)",
-                    (note.text, note.created_at, note.contact_name)
+                    "INSERT INTO notes (text, created_at) VALUES (?, ?)",
+                    (note.text, note.created_at)
                 )
                 note.id = cursor.lastrowid
             else:
                 conn.execute(
-                    "UPDATE notes SET text=?, created_at=?, contact_name=? WHERE id=?",
-                    (note.text, note.created_at, note.contact_name, note.id)
+                    "UPDATE notes SET text=?, created_at=? WHERE id=?",
+                    (note.text, note.created_at, note.id)
                 )
 
     def delete_note(self, id):
@@ -120,8 +115,8 @@ class Database:
                 ):
                     record.add_phone(phone)
                 book.data[record.name.value] = record  # bypass auto-save on load
-            for id, text, created_at, contact_name in conn.execute(
-                "SELECT id, text, created_at, contact_name FROM notes ORDER BY created_at DESC"
+            for id, text, created_at in conn.execute(
+                "SELECT id, text, created_at FROM notes ORDER BY created_at DESC"
             ):
-                book.notes.data[id] = Note(id, text, created_at, contact_name)
+                book.notes.data[id] = Note(id, text, created_at)
         return book

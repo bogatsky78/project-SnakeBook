@@ -128,8 +128,6 @@ class BookHandlers:
         if len(args) < 1:
             raise ValueError("Provide a name.")
         name = args[0]
-        for key in [k for k, n in self.book.notes.data.items() if n.contact_name == name]:
-            self.book.notes.data.pop(key)
         self.book.delete(name)  # auto-deletes from db via AddressBook
         print_done("Contact deleted.")
 
@@ -265,7 +263,7 @@ class BookHandlers:
             # Attach 0–10 random notes; id is auto-assigned by the DB
             for _ in range(random.randint(0, 10)):
                 note_text = fake.sentence()
-                self.book.notes.add_note(Note(None, note_text, contact_name=name))
+                self.book.notes.add_note(Note(None, note_text))
         print_done(f"{count} test contacts generated.")
 
     @input_error
@@ -297,11 +295,6 @@ class BookHandlers:
         ]
         print("Contact Info")
         print(tabulate(table, tablefmt="grid"))
-        notes = self.book.notes.notes_for_contact(record.name.value)
-        if notes:
-            print("Notes")
-            notes_table = [[note.id, note.formatted_created_at(), note.text] for note in notes]
-            print(tabulate(notes_table, headers=["ID", "Created At", "Text"], tablefmt="grid"))
 
     @input_error
     def show_all_contacts(self, _args=None):
@@ -318,12 +311,9 @@ class BookHandlers:
 
     @input_error
     def add_note(self, args):
-        if len(args) < 2:
-            raise ValueError("Provide contact name and text.")
-        contact_name = args[0]
-        if not self.book.find(contact_name):
-            raise ValueError("Contact not found.")
-        note = Note(None, " ".join(args[1:]), contact_name=contact_name)
+        if len(args) < 1:
+            raise ValueError("Provide note text.")
+        note = Note(None, " ".join(args))
         self.book.notes.add_note(note)
         print_done(f"Note added (ID: {note.id}).")
 
