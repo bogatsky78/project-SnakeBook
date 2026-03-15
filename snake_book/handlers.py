@@ -1,54 +1,53 @@
 import re
 import random
-from colorama import Fore, Style
-from tabulate import tabulate
+from datetime import date, timedelta
 from faker import Faker
-from .record.record import Record
+from tabulate import tabulate
+from .contacts.record import Record
+from .contacts.handlers import ContactHandlers
 from .notes import Note
+from .notes.handlers import NotesHandlers
+from .ui import print_done, print_error, input_error
 
-def print_done(message):
-    print(Fore.GREEN + message + Style.RESET_ALL)
 
-def print_error(message):
-    print(Fore.RED + message + Style.RESET_ALL)
-
-def input_error(func):
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except (IndexError, TypeError, ValueError, KeyError) as e:
-            print_error(str(e))
-    return wrapper
-
-class BookHandlers:
+class AssistantHandlers(ContactHandlers, NotesHandlers):
     def __init__(self, book):
         self.book = book
         self._handlers = {
-            "add": self.add_contact,
-            "change": self.change_contact,
-            "remove-phone": self.remove_phone,
-            "phone": self.show_phone,
-            "delete": self.delete_contact,
-            "all": self.show_all_contacts,
-            "add-birthday": self.add_birthday,
-            "show-birthday": self.show_birthday,
-            "birthdays": self.birthdays,
-            "add-email": self.add_email,
-            "change-email": self.change_email,
-            "remove-email": self.remove_email,
-            "add-address": self.add_address,
-            "change-address": self.change_address,
-            "remove-address": self.remove_address,
-            "add-note": self.add_note,
-            "show-note": self.show_note,
-            "show-notes": self.show_notes,
-            "edit-note": self.edit_note,
-            "delete-note": self.delete_note,
-            "search-note": self.search_note,
-            "generate-test-data": self.generate_test_data,
-            "clear-all": self.clear_all,
-            "info": self.show_contact_info,
-            "hello": self.show_welcome_message
+
+            "contacts":           (self.show_all_contacts,   "List all contacts"),
+            "contact-add":        (self.add_contact,         "<name> <phone> [birthday] [email] [address...] — Add contact (use '-' to skip a field)"),
+            "contact-change":     (self.change_contact,      "<name> <old_phone> <new_phone> — Change a phone"),
+            "contact-remove":     (self.delete_contact,      "<name> — Delete a contact"),
+            "contact-show":       (self.show_contact_info,   "<name> — Show contact details"),
+            "contact-search":     (self.search_contact,      "<query> — Search contacts by any field"),
+
+            "phone-add":          (self.add_phone,           "<name> <phone> — Add phone to contact"),
+            "phone-remove":       (self.remove_phone,        "<name> <phone> — Remove phone from contact"),
+
+            "birthdays":          (self.birthdays,           "Show upcoming birthdays (next 7 days)"),
+            "add-birthday":       (self.add_birthday,        "<name> <DD.MM.YYYY> — Set birthday"),
+
+            "email-add":          (self.add_email,           "<name> <email> — Add email"),
+            "email-change":       (self.change_email,        "<name> <email> — Change email"),
+            "email-remove":       (self.remove_email,        "<name> — Remove email"),
+
+            "address-add":        (self.add_address,         "<name> <address> — Add address"),
+            "address-change":     (self.change_address,      "<name> <address> — Change address"),
+            "address-remove":     (self.remove_address,      "<name> — Remove address"),
+
+            "notes":              (self.show_notes,          "List all notes"),
+            "note-add":           (self.add_note,            "<text> — Add a note"),
+            "note-show":          (self.show_note,           "<id> — Show a note"),
+            "note-edit":          (self.edit_note,           "<id> <text> — Edit a note"),
+            "note-remove":        (self.delete_note,         "<id> — Delete a note"),
+            "note-search":        (self.search_note,         "<query> — Search notes"),
+
+            "help":               (self.show_help,           "Show this help message"),
+            "hello":              (self.show_welcome_message,"Show welcome message"),
+            "clear-all":          (self.clear_all,           "Delete all contacts and notes"),
+            "generate-test-data": (self.generate_test_data,  "Populate with random test data"),
+            "exit":               (None,                     "Exit the assistant"),
         }
 
     def show_welcome_message(self, _args=None):
@@ -62,180 +61,21 @@ class BookHandlers:
             self.show_goodbye_message()
             return False
         if cmd in self._handlers:
-            self._handlers[cmd](args)
+            handler, _ = self._handlers[cmd]
+            handler(args)
             return True
-        
+
         print_error("Invalid command.")
         return None
 
-    @input_error
-    def add_contact(self, args):
-        if len(args) < 2:
-            raise ValueError("Provide name and phone number.")
-        name, phone = args[0], args[1]
-        record = self.book.find(name)
-        if record:
-            record.add_phone(phone)
-            print_done("Phone added to existing contact.")
-            if self.book.db:
-                record.save(self.book.db)
-        else:
-            from .record.record import Record
-            record = Record(name)
-            record.add_phone(phone)
-            self.book.add_record(record)  # auto-saves via AddressBook
-            print_done("Contact added.")
-
-    @input_error
-    def change_contact(self, args):
-        if len(args) < 3:
-            raise ValueError("Provide name, old phone number, and new phone number.")
-        name, old_phone, new_phone = args[0], args[1], args[2]
-        record = self.book.find(name)
-        if not record:
-            raise ValueError("Contact not found.")
-        record.edit_phone(old_phone, new_phone)
-        print_done("Contact updated.")
-        if self.book.db:
-            record.save(self.book.db)
-
-    @input_error
-    def show_phone(self, args):
-        if len(args) < 1:
-            raise ValueError("Provide a name.")
-        record = self.book.find(args[0])
-        if not record:
-            raise ValueError("Contact not found.")
-        phones = "; ".join(p.value for p in record.phones)
-        table = [[record.name.value, phones]]
-        print(tabulate(table, headers=["Name", "Phones"], tablefmt="grid"))
-
-    @input_error
-    def remove_phone(self, args):
-        if len(args) < 2:
-            raise ValueError("Provide name and phone number.")
-        name, phone = args[0], args[1]
-        record = self.book.find(name)
-        if not record:
-            raise ValueError("Contact not found.")
-        record.remove_phone(phone)
-        print_done("Phone removed.")
-        if self.book.db:
-            record.save(self.book.db)
-
-    @input_error
-    def delete_contact(self, args):
-        if len(args) < 1:
-            raise ValueError("Provide a name.")
-        name = args[0]
-        self.book.delete(name)  # auto-deletes from db via AddressBook
-        print_done("Contact deleted.")
-
-    @input_error
-    def add_birthday(self, args):
-        if len(args) < 2:
-            raise ValueError("Provide name and birthday (DD.MM.YYYY).")
-        name, birthday = args[0], args[1]
-        record = self.book.find(name)
-        if not record:
-            raise ValueError("Contact not found.")
-        record.add_birthday(birthday)
-        print_done("Birthday added.")
-        if self.book.db:
-            record.save(self.book.db)
-
-    @input_error
-    def show_birthday(self, args):
-        if len(args) < 1:
-            raise ValueError("Provide a name.")
-        record = self.book.find(args[0])
-        if not record:
-            raise ValueError("Contact not found.")
-        if not record.birthday:
-            raise ValueError("Birthday not set.")
-        print_done(f"{record.name.value}'s birthday: {record.birthday.value}")
-
-    @input_error
-    def birthdays(self, _args):
-        upcoming = self.book.get_upcoming_birthdays()
-        if not upcoming:
-            print_done("No birthdays in the next 7 days.")
-            return
-        table = [[entry['name'], entry['congratulation_date']] for entry in upcoming]
-        print(tabulate(table, headers=["Name", "Congratulation Date"], tablefmt="grid"))
-
-    @input_error
-    def add_email(self, args):
-        if len(args) < 2:
-            raise ValueError("Provide name and email.")
-        record = self.book.find(args[0])
-        if not record:
-            raise ValueError("Contact not found.")
-        record.add_email(args[1])
-        print(args);
-        print_done("Email added.")
-        if self.book.db:
-            record.save(self.book.db)
-
-    @input_error
-    def change_email(self, args):
-        if len(args) < 2:
-            raise ValueError("Provide name and new email.")
-        record = self.book.find(args[0])
-        if not record:
-            raise ValueError("Contact not found.")
-        record.edit_email(args[1])
-        print_done("Email updated.")
-        if self.book.db:
-            record.save(self.book.db)
-
-    @input_error
-    def remove_email(self, args):
-        if len(args) < 1:
-            raise ValueError("Provide a name.")
-        record = self.book.find(args[0])
-        if not record:
-            raise ValueError("Contact not found.")
-        record.remove_email()
-        print_done("Email removed.")
-        if self.book.db:
-            record.save(self.book.db)
-
-    @input_error
-    def add_address(self, args):
-        if len(args) < 2:
-            raise ValueError("Provide name and address.")
-        record = self.book.find(args[0])
-        if not record:
-            raise ValueError("Contact not found.")
-        record.add_address(" ".join(args[1:]))
-        print_done("Address added.")
-        if self.book.db:
-            record.save(self.book.db)
-
-    @input_error
-    def change_address(self, args):
-        if len(args) < 2:
-            raise ValueError("Provide name and new address.")
-        record = self.book.find(args[0])
-        if not record:
-            raise ValueError("Contact not found.")
-        record.edit_address(" ".join(args[1:]))
-        print_done("Address updated.")
-        if self.book.db:
-            record.save(self.book.db)
-
-    @input_error
-    def remove_address(self, args):
-        if len(args) < 1:
-            raise ValueError("Provide a name.")
-        record = self.book.find(args[0])
-        if not record:
-            raise ValueError("Contact not found.")
-        record.remove_address()
-        print_done("Address removed.")
-        if self.book.db:
-            record.save(self.book.db)
+    def show_help(self, _args=None):
+        table = [
+            [cmd, desc]
+            for cmd, (_, desc) in self._handlers.items()
+            if _ is not None
+        ]
+        table.append(["exit / close", "Exit the assistant"])
+        print(tabulate(table, headers=["Command", "Description"], tablefmt="grid"))
 
     @input_error
     def generate_test_data(self, _args=None):
@@ -248,7 +88,6 @@ class BookHandlers:
             for _ in range(random.randint(1, 3)):
                 digits = ''.join(filter(str.isdigit, fake.numerify('##########')))
                 record.add_phone(digits)
-            from datetime import date, timedelta
             today = date.today()
             target_day = today + timedelta(days=random.randint(-15, 15))
             birth_year = today.year - random.randint(18, 80)
@@ -260,101 +99,13 @@ class BookHandlers:
             record.add_email(fake.email())
             record.add_address(fake.address().replace("\n", ", "))
             self.book.add_record(record)
-            # Attach 0–10 random notes; id is auto-assigned by the DB
             for _ in range(random.randint(0, 10)):
-                note_text = fake.sentence()
-                self.book.notes.add_note(Note(None, note_text))
+                self.book.notes.add_note(Note(None, fake.sentence()))
         print_done(f"{count} test contacts generated.")
 
     @input_error
     def clear_all(self, _args=None):
-        # Remove all contacts (and their phones) from the database if one is attached
         if self.book.db:
             self.book.db.clear_all()
-        # Clear the in-memory contact store so the UI reflects the empty state immediately
         self.book.data.clear()
         print_done("All contacts deleted.")
-
-    @input_error
-    def show_contact_info(self, args):
-        if len(args) < 1:
-            raise ValueError("Provide a name.")
-        record = self.book.find(args[0])
-        if not record:
-            raise ValueError("Contact not found.")
-        phones = "; ".join(p.value for p in record.phones)
-        birthday = record.birthday.value if record.birthday else ""
-        email = record.email.value if record.email else ""
-        address = record.address.value if record.address else ""
-        table = [
-            ["Name", record.name.value],
-            ["Phones", phones],
-            ["Birthday", birthday],
-            ["Email", email],
-            ["Address", address],
-        ]
-        print("Contact Info")
-        print(tabulate(table, tablefmt="grid"))
-
-    @input_error
-    def show_all_contacts(self, _args=None):
-        if not self.book.data:
-            raise ValueError("No contacts found.")
-        table = []
-        for record in self.book.data.values():
-            phones = "; ".join(p.value for p in record.phones)
-            birthday = record.birthday.value if record.birthday else ""
-            email = record.email.value if record.email else ""
-            address = record.address.value if record.address else ""
-            table.append([record.name.value, phones, birthday, email, address])
-        print(tabulate(table, headers=["Name", "Phones", "Birthday", "Email", "Address"], tablefmt="grid"))
-
-    @input_error
-    def add_note(self, args):
-        if len(args) < 1:
-            raise ValueError("Provide note text.")
-        note = Note(None, " ".join(args))
-        self.book.notes.add_note(note)
-        print_done(f"Note added (ID: {note.id}).")
-
-    @input_error
-    def show_note(self, args):
-        if len(args) < 1:
-            raise ValueError("Provide a note ID.")
-        note = self.book.notes.find(int(args[0]))
-        if not note:
-            raise ValueError("Note not found.")
-        table = [[note.id, note.formatted_created_at(), note.text]]
-        print(tabulate(table, headers=["ID", "Created At", "Text"], tablefmt="grid"))
-
-    @input_error
-    def show_notes(self, _args=None):
-        notes = self.book.notes.all_notes()
-        if not notes:
-            raise ValueError("No notes found.")
-        table = [[note.id, note.formatted_created_at(), note.text] for note in notes]
-        print(tabulate(table, headers=["ID", "Created At", "Text"], tablefmt="grid"))
-
-    @input_error
-    def edit_note(self, args):
-        if len(args) < 2:
-            raise ValueError("Provide note ID and new text.")
-        self.book.notes.edit(int(args[0]), " ".join(args[1:]))
-        print_done("Note updated.")
-
-    @input_error
-    def delete_note(self, args):
-        if len(args) < 1:
-            raise ValueError("Provide a note ID.")
-        self.book.notes.delete(int(args[0]))
-        print_done("Note deleted.")
-
-    @input_error
-    def search_note(self, args):
-        if len(args) < 1:
-            raise ValueError("Provide a search query.")
-        notes = self.book.notes.search(" ".join(args))
-        if not notes:
-            raise ValueError("No notes found.")
-        table = [[note.id, note.formatted_created_at(), note.text] for note in notes]
-        print(tabulate(table, headers=["ID", "Created At", "Text"], tablefmt="grid"))

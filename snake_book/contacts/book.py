@@ -1,6 +1,6 @@
 from collections import UserDict
 
-from .notes import NotesBook
+from ..notes import NotesBook
 
 
 class AddressBook(UserDict):
@@ -44,6 +44,8 @@ class AddressBook(UserDict):
                 record.name.value.lower(),
                 *(phone.value for phone in record.phones)
             ]
+            if record.birthday:
+                fields_to_search.append(record.birthday.value.lower())
             if record.email:
                 fields_to_search.append(record.email.value.lower())
             if record.address:
