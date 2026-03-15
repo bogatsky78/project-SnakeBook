@@ -56,11 +56,21 @@ class AssistantHandlers(ContactHandlers, NotesHandlers):
     def show_goodbye_message(self, _args=None):
         print_done("Good bye!")
 
+    def _sync_with_db(self):
+        if not self.book.db:
+            return
+        fresh_book = self.book.db.load()
+        self.book.data.clear()
+        self.book.data.update(fresh_book.data)
+        self.book.notes.data.clear()
+        self.book.notes.data.update(fresh_book.notes.data)
+
     def handle(self, cmd, args):
         if cmd in ("close", "exit"):
             self.show_goodbye_message()
             return False
         if cmd in self._handlers:
+            self._sync_with_db()
             handler, _ = self._handlers[cmd]
             handler(args)
             return True

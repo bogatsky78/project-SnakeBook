@@ -15,6 +15,35 @@ pip install -r requirements.txt
 python3 -m snake_book
 ```
 
+## MCP Server (VS Code)
+
+SnakeBook includes a local MCP stdio server with contacts and notes CRUD tools.
+
+1. Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+2. Use the workspace MCP config in `.vscode/mcp.json` (already added):
+
+```json
+{
+    "servers": {
+        "snakebook": {
+            "type": "stdio",
+            "command": "python",
+            "args": ["-m", "snake_book.mcp_server"],
+            "cwd": "${workspaceFolder}"
+        }
+    }
+}
+```
+
+3. Restart VS Code/Copilot Chat MCP session so the new server is discovered.
+
+When the CLI assistant is running, changes made through MCP tools are printed live in the console with the same user-facing messages as CLI commands.
+
 The assistant loads all data from `personal_assistant.db` on startup and saves automatically after every change.
 
 ## Project Structure

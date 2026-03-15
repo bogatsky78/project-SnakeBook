@@ -1,5 +1,19 @@
 from tabulate import tabulate
 from .record import Record
+from ..messages import (
+    ADDRESS_ADDED,
+    ADDRESS_REMOVED,
+    ADDRESS_UPDATED,
+    BIRTHDAY_ADDED,
+    CONTACT_ADDED,
+    CONTACT_DELETED,
+    CONTACT_UPDATED,
+    EMAIL_ADDED,
+    EMAIL_REMOVED,
+    EMAIL_UPDATED,
+    PHONE_ADDED,
+    PHONE_REMOVED,
+)
 from ..ui import print_done, print_error, input_error
 
 
@@ -23,7 +37,7 @@ class ContactHandlers:
         if address and address != "-":
             record.add_address(address)
         self.book.add_record(record)
-        print_done("Contact added.")
+        print_done(CONTACT_ADDED)
 
     @input_error
     def change_contact(self, args):
@@ -34,7 +48,7 @@ class ContactHandlers:
         if not record:
             raise ValueError("Contact not found.")
         record.edit_phone(old_phone, new_phone)
-        print_done("Contact updated.")
+        print_done(CONTACT_UPDATED)
         if self.book.db:
             record.save(self.book.db)
 
@@ -58,7 +72,7 @@ class ContactHandlers:
         if not record:
             raise ValueError("Contact not found.")
         record.add_phone(phone)
-        print_done("Phone added.")
+        print_done(PHONE_ADDED)
         if self.book.db:
             record.save(self.book.db)
 
@@ -71,7 +85,7 @@ class ContactHandlers:
         if not record:
             raise ValueError("Contact not found.")
         record.remove_phone(phone)
-        print_done("Phone removed.")
+        print_done(PHONE_REMOVED)
         if self.book.db:
             record.save(self.book.db)
 
@@ -81,7 +95,7 @@ class ContactHandlers:
             raise ValueError("Provide a name.")
         name = args[0]
         self.book.delete(name)  # auto-deletes from db via AddressBook
-        print_done("Contact deleted.")
+        print_done(CONTACT_DELETED)
 
     @input_error
     def add_birthday(self, args):
@@ -92,7 +106,7 @@ class ContactHandlers:
         if not record:
             raise ValueError("Contact not found.")
         record.add_birthday(birthday)
-        print_done("Birthday added.")
+        print_done(BIRTHDAY_ADDED)
         if self.book.db:
             record.save(self.book.db)
 
@@ -113,8 +127,7 @@ class ContactHandlers:
         if not record:
             raise ValueError("Contact not found.")
         record.add_email(args[1])
-        print(args)
-        print_done("Email added.")
+        print_done(EMAIL_ADDED)
         if self.book.db:
             record.save(self.book.db)
 
@@ -126,7 +139,7 @@ class ContactHandlers:
         if not record:
             raise ValueError("Contact not found.")
         record.edit_email(args[1])
-        print_done("Email updated.")
+        print_done(EMAIL_UPDATED)
         if self.book.db:
             record.save(self.book.db)
 
@@ -138,7 +151,7 @@ class ContactHandlers:
         if not record:
             raise ValueError("Contact not found.")
         record.remove_email()
-        print_done("Email removed.")
+        print_done(EMAIL_REMOVED)
         if self.book.db:
             record.save(self.book.db)
 
@@ -150,7 +163,7 @@ class ContactHandlers:
         if not record:
             raise ValueError("Contact not found.")
         record.add_address(" ".join(args[1:]))
-        print_done("Address added.")
+        print_done(ADDRESS_ADDED)
         if self.book.db:
             record.save(self.book.db)
 
@@ -162,7 +175,7 @@ class ContactHandlers:
         if not record:
             raise ValueError("Contact not found.")
         record.edit_address(" ".join(args[1:]))
-        print_done("Address updated.")
+        print_done(ADDRESS_UPDATED)
         if self.book.db:
             record.save(self.book.db)
 
@@ -174,7 +187,7 @@ class ContactHandlers:
         if not record:
             raise ValueError("Contact not found.")
         record.remove_address()
-        print_done("Address removed.")
+        print_done(ADDRESS_REMOVED)
         if self.book.db:
             record.save(self.book.db)
 
