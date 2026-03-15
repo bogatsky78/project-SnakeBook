@@ -1,5 +1,5 @@
 from colorama import Fore
-from address_book import BookHandlers, Database
+from snake_book import BookHandlers, Database
 
 
 def parse_input(user_input):
