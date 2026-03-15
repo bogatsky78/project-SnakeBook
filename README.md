@@ -1,9 +1,7 @@
 # SnakeBook
 We keep your contacts close and your notes closer
 
-A CLI address book — keep your contacts and their birthdays organised.
-
-A CLI address book bot that manages contacts with phone numbers, birthdays, emails, addresses, and standalone notes. Data is persisted to disk between sessions using a SQLite database.
+A CLI personal assistant that manages contacts with phone numbers, birthdays, emails, and addresses — plus standalone notes. All data is persisted between sessions using a SQLite database.
 
 ## Installation
 
@@ -14,94 +12,129 @@ pip install -r requirements.txt
 ## Usage
 
 ```bash
-python3 address_book.py
+python3 -m snake_book
 ```
 
-The bot loads contacts from `addressbook.db` on startup and saves them automatically after every change.
+The assistant loads all data from `personal_assistant.db` on startup and saves automatically after every change.
 
 ## Project Structure
 
 ```
-address_book/
-├── __init__.py          # public exports
-├── field.py             # abstract Field base class
-├── book.py              # AddressBook (UserDict)
-├── handlers.py          # BookHandlers + input_error decorator
-├── database.py          # SQLite persistence
-├── notes/
-│   ├── __init__.py      # Note + NotesBook exports
-│   ├── note.py          # Note model
-│   └── notes_book.py    # NotesBook collection
-└── record/
-    ├── record.py        # Record (single contact)
-    └── fields/
-        ├── name.py      # Name field
-        ├── phone.py     # Phone field
-        ├── birthday.py  # Birthday field
-        ├── email.py     # Email field
-        └── address.py   # Address field
+snake_book/
+├── __init__.py              # public exports
+├── __main__.py              # entry point
+├── personal_assistant.py    # main loop
+├── field.py                 # abstract Field base class
+├── ui.py                    # print_done, print_error, input_error
+├── handlers.py              # AssistantHandlers — command dispatcher
+├── database.py              # Database — SQLite entry point
+├── contacts/
+│   ├── __init__.py          # Record export
+│   ├── book.py              # AddressBook collection
+│   ├── record.py            # Record (single contact)
+│   ├── handlers.py          # ContactHandlers mixin
+│   ├── database.py          # ContactsDatabase mixin
+│   └── fields/
+│       ├── __init__.py
+│       ├── name.py
+│       ├── phone.py
+│       ├── birthday.py
+│       ├── email.py
+│       └── address.py
+└── notes/
+    ├── __init__.py          # Note + NotesBook exports
+    ├── note.py              # Note model
+    ├── notes_book.py        # NotesBook collection
+    ├── handlers.py          # NotesHandlers mixin
+    └── database.py          # NotesDatabase mixin
 ```
 
 ## Commands
 
+### General
+
 | Command | Arguments | Description |
 |---|---|---|
-| `hello` | — | Greet the bot |
-| `add` | `<name> <phone>` | Add a phone to a new or existing contact |
-| `change` | `<name> <old_phone> <new_phone>` | Replace a phone number for an existing contact |
-| `remove-phone` | `<name> <phone>` | Remove a specific phone from a contact |
-| `delete` | `<name>` | Remove a contact entirely |
-| `phone` | `<name>` | Show a contact's phones |
-| `all` | — | List all contacts |
-| `add-birthday` | `<name> <DD.MM.YYYY>` | Add a birthday to a contact |
-| `show-birthday` | `<name>` | Show a contact's birthday |
+| `help` | — | Show all available commands |
+| `hello` | — | Show welcome message |
+| `clear-all` | — | Delete all contacts and notes |
+| `generate-test-data` | — | Populate with 5–7 random contacts and notes |
+| `exit` / `close` | — | Exit the assistant |
+
+### Contacts
+
+| Command | Arguments | Description |
+|---|---|---|
+| `contacts` | — | List all contacts |
+| `contact-add` | `<name> <phone> [birthday] [email] [address...]` | Add a new contact. Use `-` to skip optional fields. Address spans all remaining words. |
+| `contact-change` | `<name> <old_phone> <new_phone>` | Replace a phone number |
+| `contact-remove` | `<name>` | Delete a contact |
+| `contact-show` | `<name>` | Show all details for a contact |
+| `contact-search` | `<query>` | Search across name, phones, birthday, email, and address |
+
+### Phones
+
+| Command | Arguments | Description |
+|---|---|---|
+| `phone-add` | `<name> <phone>` | Add a phone to an existing contact |
+| `phone-remove` | `<name> <phone>` | Remove a phone from a contact |
+
+### Birthdays
+
+| Command | Arguments | Description |
+|---|---|---|
 | `birthdays` | — | List contacts with birthdays in the next 7 days |
-| `add-email` | `<name> <email>` | Add an email address to a contact |
-| `change-email` | `<name> <email>` | Update a contact's email address |
-| `remove-email` | `<name>` | Remove a contact's email address |
-| `add-address` | `<name> <word> ...` | Add a postal address to a contact (all words after name are joined) |
-| `change-address` | `<name> <word> ...` | Update a contact's postal address (all words after name are joined) |
-| `remove-address` | `<name>` | Remove a contact's postal address |
-| `info` | `<name>` | Show all details for a contact in a table |
-| `generate-test-data` | — | Clear all data and insert 5–7 fake contacts |
-| `clear-all` | — | Delete all contacts and phones from the database |
-| `add-note` | `<key> <text>` | Add a standalone note |
-| `show-note` | `<key>` | Show a single note |
-| `show-notes` | — | List all notes, newest first |
-| `edit-note` | `<key> <text>` | Update a note's text |
-| `delete-note` | `<key>` | Delete a note |
-| `search-note` | `<query>` | Search notes by key or text |
-| `close` / `exit` | — | Save and exit the bot |
+| `add-birthday` | `<name> <DD.MM.YYYY>` | Set a contact's birthday |
+
+### Email
+
+| Command | Arguments | Description |
+|---|---|---|
+| `email-add` | `<name> <email>` | Add an email |
+| `email-change` | `<name> <email>` | Update an email |
+| `email-remove` | `<name>` | Remove an email |
+
+### Address
+
+| Command | Arguments | Description |
+|---|---|---|
+| `address-add` | `<name> <address...>` | Add a postal address (all words after name are joined) |
+| `address-change` | `<name> <address...>` | Update a postal address |
+| `address-remove` | `<name>` | Remove a postal address |
+
+### Notes
+
+| Command | Arguments | Description |
+|---|---|---|
+| `notes` | — | List all notes, newest first |
+| `note-add` | `<text>` | Add a note |
+| `note-show` | `<id>` | Show a single note |
+| `note-edit` | `<id> <text>` | Update a note's text |
+| `note-remove` | `<id>` | Delete a note |
+| `note-search` | `<query>` | Search notes by text |
 
 ## Classes
 
 | Class | File | Description |
 |---|---|---|
-| `input_error`, `print_done`, `print_error` | `address_book/handlers.py` | Shared utilities: `input_error` wraps handlers to catch common exceptions and display errors; `print_done`/`print_error` print colour-coded output. |
-| `Field` | `address_book/field.py` | Base class for all contact fields. Stores a single value with a property getter/setter. |
-| `Name` | `address_book/record/fields/name.py` | Extends `Field`. Stores a contact's name; validates it is at least 3 alphanumeric/`-`/`_` characters. |
-| `Phone` | `address_book/record/fields/phone.py` | Extends `Field`. Stores a phone number; strips non-digit characters and requires at least 10 digits. |
-| `Birthday` | `address_book/record/fields/birthday.py` | Extends `Field`. Stores a birthday string; validates it matches the `DD.MM.YYYY` format. |
-| `Email` | `address_book/record/fields/email.py` | Extends `Field`. Stores an email address; validates it matches standard email format. |
-| `Address` | `address_book/record/fields/address.py` | Extends `Field`. Stores a postal address; requires at least 3 characters. |
-| `Record` | `address_book/record/record.py` | Represents a single contact. Holds a `Name`, a list of `Phone`s, and optional `Birthday`, `Email`, and `Address`. Provides methods to add, edit, and remove each field, as well as computing the next congratulation date for upcoming birthdays. |
-| `AddressBook` | `address_book/book.py` | Extends `UserDict`. The main collection of `Record`s, keyed by name. Supports adding, finding, deleting records, listing contacts with birthdays in the next 7 days, and partial/multi-criteria search across name, phones, email, and address. |
-| `Note` | `address_book/notes/note.py` | Represents a standalone note with a unique key, text content, and creation timestamp. |
-| `NotesBook` | `address_book/notes/notes_book.py` | Extends `UserDict`. Stores notes keyed by note key, supports add/find/edit/delete/search operations, and lists notes newest first. |
-| `BookHandlers` | `address_book/handlers.py` | Maps CLI commands to their handler methods. Each method validates arguments, delegates to `AddressBook`/`Record`, and prints results. Decorated with `input_error` to handle exceptions gracefully. |
-| `Database` | `address_book/database.py` | Handles persistence via SQLite. Saves and loads an `AddressBook` to/from `addressbook.db`. Contacts are stored in a `contacts` table, phones in a separate `phones` table with a foreign-key cascade on delete, and notes in a `notes` table. |
+| `Field` | `snake_book/field.py` | Base class for all contact fields. Stores a single validated value. |
+| `Name` | `contacts/fields/name.py` | Validates name is at least 3 alphanumeric/`-`/`_` characters. |
+| `Phone` | `contacts/fields/phone.py` | Strips non-digits, requires at least 10 digits. |
+| `Birthday` | `contacts/fields/birthday.py` | Validates `DD.MM.YYYY` format. |
+| `Email` | `contacts/fields/email.py` | Validates standard email format. |
+| `Address` | `contacts/fields/address.py` | Requires at least 3 characters. |
+| `Record` | `contacts/record.py` | Single contact: one `Name`, many `Phone`s, optional `Birthday`/`Email`/`Address`. |
+| `AddressBook` | `contacts/book.py` | `UserDict` of `Record`s. Handles add/find/delete and multi-field search. |
+| `Note` | `notes/note.py` | A note with an auto-assigned id, text, and creation timestamp. |
+| `NotesBook` | `notes/notes_book.py` | `UserDict` of `Note`s. Supports add/find/edit/delete/search, sorted newest-first. |
+| `ContactHandlers` | `contacts/handlers.py` | Mixin with all contact-related command handlers. |
+| `NotesHandlers` | `notes/handlers.py` | Mixin with all note-related command handlers. |
+| `AssistantHandlers` | `snake_book/handlers.py` | Inherits both mixins. Owns the command registry and dispatches input. |
+| `ContactsDatabase` | `contacts/database.py` | Mixin — contacts and phones table init, CRUD, and bulk load. |
+| `NotesDatabase` | `notes/database.py` | Mixin — notes table init, CRUD, and bulk load. |
+| `Database` | `snake_book/database.py` | Inherits both DB mixins. Owns `_init_db`, `load`, and `clear_all`. |
 
 ## TODO
-
-### Core
-
-- [x] Implement `Notes` module — `Note` class with text content
-- [x] `add-note` command
-- [x] `show-note` / `show-notes` commands
-- [x] `edit-note` command
-- [x] `delete-note` command
-- [x] `search-note` command
-- [x] Persist notes to disk alongside contacts
 
 ### Bonus
 
