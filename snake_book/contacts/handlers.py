@@ -227,10 +227,11 @@ class ContactHandlers:
 
     @input_error
     def show_all_contacts(self, _args=None):
-        if not self.book.data:
+        records = self.book.all_records()
+        if not records:
             raise ValueError("No contacts found.")
         table = []
-        for record in self.book.data.values():
+        for record in records:
             phones = "; ".join(p.value for p in record.phones)
             birthday = record.birthday.value if record.birthday else ""
             email = record.email.value if record.email else ""

@@ -40,6 +40,20 @@ class NotesDatabase:
                 (id,)
             )
 
+    def find_note(self, id):
+        with sqlite3.connect(self.filename) as conn:
+            row = conn.execute(
+                "SELECT id, text, created_at FROM notes WHERE id = ?", (id,)
+            ).fetchone()
+            if row is None:
+                return None
+            return Note(row[0], row[1], row[2])
+
+    def all_notes_from_db(self):
+        with sqlite3.connect(self.filename) as conn:
+            notes = self.load_notes(conn)
+        return sorted(notes.values(), key=lambda n: n.created_at, reverse=True)
+
     def load_notes(self, conn):
         notes = {}
         for id, text, created_at in conn.execute(

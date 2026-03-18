@@ -15,6 +15,8 @@ class NotesBook(UserDict):
         self.data[note.id] = note
 
     def find(self, id):
+        if self.db:
+            return self.db.find_note(id)
         return self.data.get(id)
 
     def edit(self, id, text):
@@ -24,14 +26,18 @@ class NotesBook(UserDict):
         note.edit_text(text)
         if self.db:
             note.save(self.db)
+        else:
+            self.data[id] = note
         return note
 
     def delete(self, id):
-        if id not in self.data:
+        note = self.find(id)
+        if not note:
             raise ValueError(f"Note {id} not found.")
-        note = self.data.pop(id)
         if self.db:
-            self.db.delete_note(note.id)
+            self.db.delete_note(id)
+        else:
+            self.data.pop(id)
 
     def search(self, query):
         query = query.lower()
@@ -42,6 +48,8 @@ class NotesBook(UserDict):
         ]
 
     def all_notes(self):
+        if self.db:
+            return self.db.all_notes_from_db()
         return sorted(
             self.data.values(),
             key=lambda note: note.created_at,

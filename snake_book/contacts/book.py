@@ -15,7 +15,14 @@ class AddressBook(UserDict):
             record.save(self.db)
 
     def find(self, name):
+        if self.db:
+            return self.db.find_contact(name)
         return self.data.get(name)
+
+    def all_records(self):
+        if self.db:
+            return self.db.all_contacts()
+        return list(self.data.values())
 
     def delete(self, name):
         if name in self.data:
@@ -27,7 +34,7 @@ class AddressBook(UserDict):
 
     def get_upcoming_birthdays(self):
         output = []
-        for r in self.data.values():
+        for r in self.all_records():
             congratulation_date = r.get_congratulation_date()
             if congratulation_date:
                 output.append({
@@ -37,20 +44,5 @@ class AddressBook(UserDict):
         return output
     
     def search(self, query):
-        result = []
-        query = query.lower()
-        for record in self.data.values():
-            fields_to_search = [
-                record.name.value.lower(),
-                *(phone.value for phone in record.phones)
-            ]
-            if record.birthday:
-                fields_to_search.append(record.birthday.value.lower())
-            if record.email:
-                fields_to_search.append(record.email.value.lower())
-            if record.address:
-                fields_to_search.append(record.address.value.lower())
-            if any(query in field for field in fields_to_search):
-                result.append(record)
-        return result
+        return self.db.search_contacts(query)
                 

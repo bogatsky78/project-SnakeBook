@@ -63,6 +63,57 @@ class ContactsDatabase:
                 (record.name.value,)
             )
 
+    def find_contact(self, name):
+        with sqlite3.connect(self.filename) as conn:
+            conn.execute("PRAGMA foreign_keys = ON")
+            row = conn.execute(
+                "SELECT name, birthday, email, address FROM contacts WHERE name = ?", (name,)
+            ).fetchone()
+            if row is None:
+                return None
+            record = Record(row[0])
+            if row[1]: record.add_birthday(row[1])
+            if row[2]: record.add_email(row[2])
+            if row[3]: record.add_address(row[3])
+            for (phone,) in conn.execute(
+                "SELECT phone FROM phones WHERE contact_name = ?", (name,)
+            ):
+                record.add_phone(phone)
+            return record
+
+    def search_contacts(self, query):
+        pattern = f"%{query}%"
+        with sqlite3.connect(self.filename) as conn:
+            rows = conn.execute(
+                """
+                SELECT DISTINCT c.name, c.birthday, c.email, c.address
+                FROM contacts c
+                LEFT JOIN phones p ON p.contact_name = c.name
+                WHERE LOWER(c.name)     LIKE LOWER(?)
+                   OR LOWER(c.birthday) LIKE LOWER(?)
+                   OR LOWER(c.email)    LIKE LOWER(?)
+                   OR LOWER(c.address)  LIKE LOWER(?)
+                   OR p.phone           LIKE LOWER(?)
+                """,
+                (pattern, pattern, pattern, pattern, pattern)
+            ).fetchall()
+            records = []
+            for name, birthday, email, address in rows:
+                record = Record(name)
+                if birthday: record.add_birthday(birthday)
+                if email:    record.add_email(email)
+                if address:  record.add_address(address)
+                for (phone,) in conn.execute(
+                    "SELECT phone FROM phones WHERE contact_name = ?", (name,)
+                ):
+                    record.add_phone(phone)
+                records.append(record)
+            return records
+
+    def all_contacts(self):
+        with sqlite3.connect(self.filename) as conn:
+            return self.load_contacts(conn)
+
     def load_contacts(self, conn):
         records = []
         for name, birthday, email, address in conn.execute(
