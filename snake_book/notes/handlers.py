@@ -1,7 +1,6 @@
-from tabulate import tabulate
 from .note import Note
 from ..messages import NOTE_ADDED, NOTE_DELETED, NOTE_UPDATED
-from ..ui import print_done, print_error, input_error
+from ..ui import print_done, print_error, input_error, print_table
 
 
 class NotesHandlers:
@@ -20,8 +19,7 @@ class NotesHandlers:
         note = self.book.notes.find(int(args[0]))
         if not note:
             raise ValueError("Note not found.")
-        table = [[note.id, note.formatted_created_at(), note.text]]
-        print(tabulate(table, headers=["ID", "Created At", "Text"], tablefmt="grid"))
+        print_table(["# ID", "📅 Created At", "📝 Text"], [[note.id, note.formatted_created_at(), note.text]])
 
     @input_error
     def show_notes(self, _args=None):
@@ -29,7 +27,7 @@ class NotesHandlers:
         if not notes:
             raise ValueError("No notes found.")
         table = [[note.id, note.formatted_created_at(), note.text] for note in notes]
-        print(tabulate(table, headers=["ID", "Created At", "Text"], tablefmt="grid"))
+        print_table(["# ID", "📅 Created At", "📝 Text"], table)
 
     @input_error
     def edit_note(self, args):
@@ -53,4 +51,4 @@ class NotesHandlers:
         if not notes:
             raise ValueError("No notes found.")
         table = [[note.id, note.formatted_created_at(), note.text] for note in notes]
-        print(tabulate(table, headers=["ID", "Created At", "Text"], tablefmt="grid"))
+        print_table(["# ID", "📅 Created At", "📝 Text"], table)

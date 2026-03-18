@@ -1,4 +1,3 @@
-from tabulate import tabulate
 from .record import Record
 from ..messages import (
     ADDRESS_ADDED,
@@ -14,7 +13,7 @@ from ..messages import (
     PHONE_ADDED,
     PHONE_REMOVED,
 )
-from ..ui import print_done, print_error, input_error
+from ..ui import print_done, print_error, input_error, print_table, print_kv_table
 
 
 class ContactHandlers:
@@ -60,8 +59,7 @@ class ContactHandlers:
         if not record:
             raise ValueError("Contact not found.")
         phones = "; ".join(p.value for p in record.phones)
-        table = [[record.name.value, phones]]
-        print(tabulate(table, headers=["Name", "Phones"], tablefmt="grid"))
+        print_table(["👤 Name", "📞 Phones"], [[record.name.value, phones]])
 
     @input_error
     def add_phone(self, args):
@@ -117,7 +115,7 @@ class ContactHandlers:
             print_done("No birthdays in the next 7 days.")
             return
         table = [[entry['name'], entry['congratulation_date']] for entry in upcoming]
-        print(tabulate(table, headers=["Name", "Congratulation Date"], tablefmt="grid"))
+        print_table(["👤 Name", "🎉 Congratulation Date"], table)
 
     @input_error
     def add_email(self, args):
@@ -203,14 +201,13 @@ class ContactHandlers:
         email = record.email.value if record.email else ""
         address = record.address.value if record.address else ""
         table = [
-            ["Name", record.name.value],
-            ["Phones", phones],
-            ["Birthday", birthday],
-            ["Email", email],
-            ["Address", address],
+            ["👤 Name",    record.name.value],
+            ["📞 Phones",  phones],
+            ["🎂 Birthday", birthday],
+            ["✉️  Email",   email],
+            ["🏠 Address",  address],
         ]
-        print("Contact Info")
-        print(tabulate(table, tablefmt="grid"))
+        print_kv_table("Contact Info", table)
 
     @input_error
     def search_contact(self, args):
@@ -226,7 +223,7 @@ class ContactHandlers:
             email = record.email.value if record.email else ""
             address = record.address.value if record.address else ""
             table.append([record.name.value, phones, birthday, email, address])
-        print(tabulate(table, headers=["Name", "Phones", "Birthday", "Email", "Address"], tablefmt="grid"))
+        print_table(["👤 Name", "📞 Phones", "🎂 Birthday", "✉️  Email", "🏠 Address"], table)
 
     @input_error
     def show_all_contacts(self, _args=None):
@@ -239,4 +236,4 @@ class ContactHandlers:
             email = record.email.value if record.email else ""
             address = record.address.value if record.address else ""
             table.append([record.name.value, phones, birthday, email, address])
-        print(tabulate(table, headers=["Name", "Phones", "Birthday", "Email", "Address"], tablefmt="grid"))
+        print_table(["👤 Name", "📞 Phones", "🎂 Birthday", "✉️  Email", "🏠 Address"], table)

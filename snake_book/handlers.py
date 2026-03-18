@@ -2,12 +2,24 @@ import re
 import random
 from datetime import date, timedelta
 from faker import Faker
-from tabulate import tabulate
 from .contacts.record import Record
 from .contacts.handlers import ContactHandlers
 from .notes import Note
 from .notes.handlers import NotesHandlers
-from .ui import print_done, print_error, input_error
+from .ui import print_done, print_error, input_error, print_help_section
+
+_HELP_CATEGORIES = [
+    ("Contacts",   ["contacts", "contact-add", "contact-change",
+                    "contact-remove", "contact-show", "contact-search"]),
+    ("Phones",     ["phone-add", "phone-remove"]),
+    ("Birthdays",  ["birthdays", "add-birthday"]),
+    ("Emails",     ["email-add", "email-change", "email-remove"]),
+    ("Addresses",  ["address-add", "address-change", "address-remove"]),
+    ("Notes",      ["notes", "note-add", "note-show",
+                    "note-edit", "note-remove", "note-search"]),
+    ("General",    ["help", "hello", "clear-all",
+                    "generate-test-data", "exit / close"]),
+]
 
 
 class AssistantHandlers(ContactHandlers, NotesHandlers):
@@ -79,13 +91,23 @@ class AssistantHandlers(ContactHandlers, NotesHandlers):
         return None
 
     def show_help(self, _args=None):
-        table = [
-            [cmd, desc]
-            for cmd, (_, desc) in self._handlers.items()
-            if _ is not None
-        ]
-        table.append(["exit / close", "Exit the assistant"])
-        print(tabulate(table, headers=["Command", "Description"], tablefmt="grid"))
+        exit_desc = self._handlers["exit"][1]
+        synthetic = {"exit / close": (None, exit_desc)}
+
+        for label, cmds in _HELP_CATEGORIES:
+            rows = []
+            for cmd in cmds:
+                handler_tuple = self._handlers.get(cmd) or synthetic.get(cmd)
+                if handler_tuple is None:
+                    continue
+                raw_desc = handler_tuple[1]
+                if " — " in raw_desc:
+                    usage, description = raw_desc.split(" — ", 1)
+                else:
+                    usage, description = "", raw_desc
+                rows.append([cmd, usage, description])
+            if rows:
+                print_help_section(label, rows)
 
     @input_error
     def generate_test_data(self, _args=None):
